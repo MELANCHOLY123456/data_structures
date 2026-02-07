@@ -1,0 +1,806 @@
+第六章 树和二叉树
+
+6.33 
+int Is_Descendant_C(int u,int v)//在孩子存储结构上判断u是否v的子孙,是则返回1,否则返回0
+{
+  if(u==v) return 1;
+  else
+  {
+    if(L[v])
+      if (Is_Descendant(u,L[v])) return 1;
+    if(R[v])
+      if (Is_Descendant(u,R[v])) return 1; //这是个递归算法
+  }
+  return 0;
+}//Is_Descendant_C 
+6.34 
+int Is_Descendant_P(int u,int v)//在双亲存储结构上判断u是否v的子孙,是则返回1,否则返回0
+{
+  for(p=u;p!=v&&p;p=T[p]);
+  if(p==v) return 1;
+  else return 0;
+}//Is_Descendant_P 
+6.35 
+这一题根本不需要写什么算法,见书后注释:两个整数的值是相等的. 
+6.36 
+int Bitree_Sim(Bitree B1,Bitree B2)//判断两棵树是否相似的递归算法
+{
+  if(!B1&&!B2) return 1;
+  else if(B1&&B2&&Bitree_Sim(B1->lchild,B2->lchild)&&Bitree_Sim(B1->rchild,B2->rchild))
+    return 1;
+  else return 0;
+}//Bitree_Sim 
+6.37 
+void PreOrder_Nonrecursive(Bitree T)//先序遍历二叉树的非递归算法
+{
+  InitStack(S);
+  Push(S,T); //根指针进栈
+  while(!StackEmpty(S))
+  {
+    while(Gettop(S,p)&&p)
+    {
+      visit(p->data);
+      push(S,p->lchild);
+    } //向左走到尽头
+    pop(S,p);
+    if(!StackEmpty(S))
+    {
+     pop(S,p);
+     push(S,p->rchild); //向右一步
+    }
+  }//while
+}//PreOrder_Nonrecursive 
+6.38 
+typedef struct {
+                     BTNode* ptr;
+                     enum {0,1,2} mark;
+                   } PMType; //有mark域的结点指针类型 
+void PostOrder_Stack(BiTree T)//后续遍历二叉树的非递归算法,用栈
+{
+  PMType a;
+  InitStack(S); //S的元素为PMType类型
+  Push (S,{T,0}); //根结点入栈
+  while(!StackEmpty(S))
+  {
+    Pop(S,a);
+    switch(a.mark)
+    {
+      case 0:
+        Push(S,{a.ptr,1}); //修改mark域
+        if(a.ptr->lchild) Push(S,{a.ptr->lchild,0}); //访问左子树
+        break;
+      case 1:
+        Push(S,{a.ptr,2}); //修改mark域
+        if(a.ptr->rchild) Push(S,{a.ptr->rchild,0}); //访问右子树
+        break;
+      case 2:
+        visit(a.ptr); //访问结点,返回
+    }
+  }//while
+}//PostOrder_Stack
+分析:为了区分两次过栈的不同处理方式,在堆栈中增加一个mark域,mark=0表示刚刚访问此结点,mark=1表示左子树处理结束返回,mark=2表示右子树处理结束返回.每次根据栈顶元素的mark域值决定做何种动作. 
+6.39 
+typedef struct {
+                     int data;
+                     EBTNode *lchild;
+                     EBTNode *rchild;
+                     EBTNode *parent;
+                     enum {0,1,2} mark;
+                  } EBTNode,EBitree; //有mark域和双亲指针域的二叉树结点类型 
+void PostOrder_Nonrecursive(EBitree T)//后序遍历二叉树的非递归算法,不用栈
+{
+  p=T;
+  while(p)
+    switch(p->mark)
+    {
+      case 0:
+        p->mark=1;
+        if(p->lchild) p=p->lchild; //访问左子树
+        break;
+      case 1:
+        p->mark=2;
+        if(p->rchild) p=p->rchild; //访问右子树
+        break;
+      case 2:
+        visit(p);
+        p->mark=0; //恢复mark值
+        p=p->parent; //返回双亲结点
+    }
+}//PostOrder_Nonrecursive
+分析:本题思路与上一题完全相同,只不过结点的mark值是储存在结点中的,而不是暂存在堆栈中,所以访问完毕后要将mark域恢复为0,以备下一次遍历. 
+6.40 
+typedef struct {
+                     int data;
+                     PBTNode *lchild;
+                     PBTNode *rchild;
+                     PBTNode *parent;
+                   } PBTNode,PBitree; //有双亲指针域的二叉树结点类型 
+void Inorder_Nonrecursive(PBitree T)//不设栈非递归遍历有双亲指针的二叉树
+{
+  p=T;
+  while(p->lchild) p=p->lchild; //向左走到尽头
+  while(p)
+  {
+    visit(p);
+    if(p->rchild) //寻找中序后继:当有右子树时
+    {
+      p=p->rchild;
+      while(p->lchild) p=p->lchild; //后继就是在右子树中向左走到尽头
+    }
+    else if(p->parent->lchild==p) p=p->parent; //当自己是双亲的左孩子时后继就是双亲
+    else
+    {
+      p=p->parent;
+      while(p->parent&&p->parent->rchild==p) p=p->parent;
+      p=p->parent;
+    } //当自己是双亲的右孩子时后继就是向上返回直到遇到自己是在其左子树中的祖先
+  }//while
+}//Inorder_Nonrecursive 
+6.41 
+int c,k; //这里把k和计数器c作为全局变量处理 
+void Get_PreSeq(Bitree T)//求先序序列为k的结点的值
+{
+  if(T)
+  {
+    c++; //每访问一个子树的根都会使前序序号计数器加1
+    if(c==k)
+    {
+      printf("Value is %d\n",T->data);
+      exit (1);
+    }
+    else
+    {
+      Get_PreSeq(T->lchild); //在左子树中查找
+      Get_PreSeq(T->rchild); //在右子树中查找
+    }
+  }//if
+}//Get_PreSeq 
+main()
+{
+  ...
+  scanf("%d",&k);
+  c=0; //在主函数中调用前,要给计数器赋初值0
+  Get_PreSeq(T,k);
+  ...
+}//main 
+6.42 
+int LeafCount_BiTree(Bitree T)//求二叉树中叶子结点的数目
+{
+  if(!T) return 0; //空树没有叶子
+  else if(!T->lchild&&!T->rchild) return 1; //叶子结点
+  else return Leaf_Count(T->lchild)+Leaf_Count(T->rchild);//左子树的叶子数加上右子树的叶子数
+}//LeafCount_BiTree 
+6.43 
+void Bitree_Revolute(Bitree T)//交换所有结点的左右子树
+{
+  T->lchild<->T->rchild; //交换左右子树
+  if(T->lchild) Bitree_Revolute(T->lchild);
+  if(T->rchild) Bitree_Revolute(T->rchild); //左右子树再分别交换各自的左右子树
+}//Bitree_Revolute 
+6.44 
+int Get_Sub_Depth(Bitree T,int x)//求二叉树中以值为x的结点为根的子树深度
+{
+  if(T->data==x)
+  {
+    printf("%d\n",Get_Depth(T)); //找到了值为x的结点,求其深度
+    exit 1;
+  }
+  else
+  {
+    if(T->lchild) Get_Sub_Depth(T->lchild,x);
+    if(T->rchild) Get_Sub_Depth(T->rchild,x); //在左右子树中继续寻找
+  }
+}//Get_Sub_Depth 
+int Get_Depth(Bitree T)//求子树深度的递归算法
+{
+  if(!T) return 0;
+  else
+  {
+    m=Get_Depth(T->lchild);
+    n=Get_Depth(T->rchild);
+    return (m>n?m:n)+1;
+  }
+}//Get_Depth 
+6.45 
+void Del_Sub_x(Bitree T,int x)//删除所有以元素x为根的子树
+{
+  if(T->data==x) Del_Sub(T); //删除该子树
+  else
+  {
+    if(T->lchild) Del_Sub_x(T->lchild,x);
+    if(T->rchild) Del_Sub_x(T->rchild,x); //在左右子树中继续查找
+  }//else
+}//Del_Sub_x 
+void Del_Sub(Bitree T)//删除子树T
+{
+  if(T->lchild) Del_Sub(T->lchild);
+  if(T->rchild) Del_Sub(T->rchild);
+  free(T);
+}//Del_Sub 
+6.46 
+void Bitree_Copy_Nonrecursive(Bitree T,Bitree &U)//非递归复制二叉树
+{
+  InitStack(S1);InitStack(S2);
+  push(S1,T); //根指针进栈
+  U=(BTNode*)malloc(sizeof(BTNode));
+  U->data=T->data;
+  q=U;push(S2,U);
+  while(!StackEmpty(S))
+  {
+    while(Gettop(S1,p)&&p)
+    {
+      q->lchild=(BTNode*)malloc(sizeof(BTNode));
+      q=q->lchild;q->data=p->data;
+      push(S1,p->lchild);
+      push(S2,q);
+    } //向左走到尽头
+    pop(S1,p);
+    pop(S2,q);
+    if(!StackEmpty(S1))
+    {
+     pop(S1,p);pop(S2,q);
+     q->rchild=(BTNode*)malloc(sizeof(BTNode));
+     q=q->rchild;q->data=p->data;
+     push(S1,p->rchild); //向右一步
+     push(S2,q);
+    }
+  }//while
+}//BiTree_Copy_Nonrecursive
+分析:本题的算法系从6.37改写而来. 
+6.47 
+void LayerOrder(Bitree T)//层序遍历二叉树
+{
+  InitQueue(Q); //建立工作队列
+  EnQueue(Q,T);
+  while(!QueueEmpty(Q))
+  {
+    DeQueue(Q,p);
+    visit(p);
+    if(p->lchild) EnQueue(Q,p->lchild);
+    if(p->rchild) EnQueue(Q,p->rchild);
+  }
+}//LayerOrder 
+6.48 
+int found=FALSE; 
+Bitree* Find_Near_Ancient(Bitree T,Bitree p,Bitree q)//求二叉树T中结点p和q的最近共同祖先
+{
+  Bitree pathp[ 100 ],pathq[ 100 ] //设立两个辅助数组暂存从根到p,q的路径
+  Findpath(T,p,pathp,0);
+  found=FALSE;
+  Findpath(T,q,pathq,0); //求从根到p,q的路径放在pathp和pathq中
+  for(i=0;pathp[i]==pathq[i]&&pathp[i];i++); //查找两条路径上最后一个相同结点
+  return pathp[--i];
+}//Find_Near_Ancient 
+void Findpath(Bitree T,Bitree p,Bitree path[ ],int i)//求从T到p路径的递归算法
+{
+  if(T==p)
+  {
+    found=TRUE;
+    return; //找到
+  }
+  path[i]=T; //当前结点存入路径
+  if(T->lchild) Findpath(T->lchild,p,path,i+1); //在左子树中继续寻找
+  if(T->rchild&&!found) Findpath(T->rchild,p,path,i+1); //在右子树中继续寻找
+  if(!found) path[i]=NULL; //回溯
+}//Findpath 
+6.49 
+int IsFull_Bitree(Bitree T)//判断二叉树是否完全二叉树,是则返回1,否则返回0
+{
+  InitQueue(Q);
+  flag=0;
+  EnQueue(Q,T); //建立工作队列
+  while(!QueueEmpty(Q))
+  {
+    DeQueue(Q,p);
+    if(!p) flag=1;
+    else if(flag) return 0;
+    else
+    {
+      EnQueue(Q,p->lchild);
+      EnQueue(Q,p->rchild); //不管孩子是否为空,都入队列
+    }
+  }//while
+  return 1;
+}//IsFull_Bitree
+分析:该问题可以通过层序遍历的方法来解决.与6.47相比,作了一个修改,不管当前结点是否有左右孩子,都入队列.这样当树为完全二叉树时,遍历时得到是一个连续的不包含空指针的序列.反之,则序列中会含有空指针. 
+6.50 
+Status CreateBitree_Triplet(Bitree &T)//输入三元组建立二叉树
+{
+  if(getchar()!='^') return ERROR;
+  T=(BTNode*)malloc(sizeof(BTNode));
+  p=T;p->data=getchar();
+  getchar(); //滤去多余字符
+  InitQueue(Q);
+  EnQueue(Q,T);
+  while((parent=getchar())!='^'&&(child=getchar())&&(side=getchar()))
+  {
+    while(QueueHead(Q)!=parent&&!QueueEmpty(Q)) DeQueue(Q,e);
+    if(QueueEmpty(Q)) return ERROR; //未按层序输入
+    p=QueueHead(Q);
+    q=(BTNode*)malloc(sizeof(BTNode));
+    if(side=='L') p->lchild=q;
+    else if(side=='R') p->rchild=q;
+    else return ERROR; //格式不正确
+    q->data=child;
+    EnQueue(Q,q);
+  }
+  return OK;
+}//CreateBitree_Triplet 
+6.51 
+Status Print_Expression(Bitree T)//按标准形式输出以二叉树存储的表达式
+{
+  if(T->data是字母) printf("%c",T->data);
+  else if(T->data是操作符)
+  {
+    if(!T->lchild||!T->rchild) return ERROR; //格式错误
+    if(T->lchild->data是操作符&&T->lchild->data优先级低于T->data)
+    {
+      printf("(");
+      if(!Print_Expression(T->lchild)) return ERROR;
+      printf(")");
+    } //注意在什么情况下要加括号
+    else if(!Print_Expression(T->lchild)) return ERROR;
+    if(T->rchild->data是操作符&&T->rchild->data优先级低于T->data)
+    {
+      printf("(");
+      if(!Print_Expression(T->rchild)) return ERROR;
+      printf(")");
+    }
+    else if(!Print_Expression(T->rchild)) return ERROR;
+  }
+  else return ERROR; //非法字符
+  return OK;
+}//Print_Expression 
+6.52 
+typedef struct{
+                    BTNode node;
+                    int layer;
+                  } BTNRecord; //包含结点所在层次的记录类型 
+int FanMao(Bitree T)//求一棵二叉树的"繁茂度"
+{
+  int countd; //count数组存放每一层的结点数
+  InitQueue(Q); //Q的元素为BTNRecord类型
+  EnQueue(Q,{T,0});
+  while(!QueueEmpty(Q))
+  {
+    DeQueue(Q,r);
+    count[r.layer]++;
+    if(r.node->lchild) EnQueue(Q,{r.node->lchild,r.layer+1});
+    if(r.node->rchild) EnQueue(Q,{r.node->rchild,r.layer+1});
+  } //利用层序遍历来统计各层的结点数
+  h=r.layer; //最后一个队列元素所在层就是树的高度
+  for(maxn=count[0],i=1;count[i];i++)
+    if(count[i]>maxn) maxn=count[i]; //求层最大结点数
+  return h*maxn;
+}//FanMao
+分析:如果不允许使用辅助数组,就必须在遍历的同时求出层最大结点数,形式上会复杂一些,你能写出来吗? 
+6.53 
+int maxh; 
+Status Printpath_MaxdepthS1(Bitree T)//求深度等于树高度减一的最靠左的结点
+{
+  Bitree pathd;
+  maxh=Get_Depth(T); //Get_Depth函数见6.44
+  if(maxh<2) return ERROR; //无符合条件结点
+  Find_h(T,1);
+  return OK;
+}//Printpath_MaxdepthS1 
+void Find_h(Bitree T,int h)//寻找深度为maxh-1的结点
+{
+  path[h]=T;
+  if(h==maxh-1)
+  {
+    for(i=1;path[i];i++) printf("%c",path[i]->data);
+    exit; //打印输出路径
+  }
+  else
+  {
+    if(T->lchild) Find_h(T->lchild,h+1);
+    if(T->rchild) Find_h(T->rchild,h+1);
+  }
+  path[h]=NULL; //回溯
+}//Find_h 
+6.54 
+Status CreateBitree_SqList(Bitree &T,SqList sa)//根据顺序存储结构建立二叉链表
+{
+  Bitree ptr[sa.last+1]; //该数组储存与sa中各结点对应的树指针
+  if(!sa.last)
+  {
+    T=NULL; //空树
+    return;
+  }
+  ptr[1]=(BTNode*)malloc(sizeof(BTNode));
+  ptr[1]->data=sa.elem[1]; //建立树根
+  T=ptr[1];
+  for(i=2;i<=sa.last;i++)
+  {
+    if(!sa.elem[i]) return ERROR; //顺序错误
+    ptr[i]=(BTNode*)malloc(sizeof(BTNode));
+    ptr[i]->data=sa.elem[i];
+    j=i/2; //找到结点i的双亲j
+    if(i-j*2) ptr[j]->rchild=ptr[i]; //i是j的右孩子
+    else ptr[j]->lchild=ptr[i]; //i是j的左孩子
+  }
+  return OK;
+}//CreateBitree_SqList 
+6.55 
+int DescNum(Bitree T)//求树结点T的子孙总数填入DescNum域中,并返回该数
+{
+  if(!T) return -1;
+  else d=(DescNum(T->lchild)+DescNum(T->rchild)+2); //计算公式
+  T->DescNum=d;
+  return d;
+}//DescNum
+分析:该算法时间复杂度为O(n),n为树结点总数.注意:为了能用一个统一的公式计算子孙数目,所以当T为空指针时,要返回-1而不是0. 
+6.56 
+BTNode *PreOrder_Next(BTNode *p)//在先序后继线索二叉树中查找结点p的先序后继,并返回指针
+{
+  if(p->lchild) return p->lchild;
+  else return p->rchild;
+}//PreOrder_Next
+分析:总觉得不会这么简单.是不是哪儿理解错了? 
+6.57 
+Bitree PostOrder_Next(Bitree p)//在后序后继线索二叉树中查找结点p的后序后继,并返回指针
+{
+  if(p->rtag) return p->rchild; //p有后继线索
+  else if(!p->parent) return NULL; //p是根结点
+  else if(p==p->parent->rchild) return p->parent; //p是右孩子
+  else if(p==p->parent->lchild&&p->parent->rtag)
+    return p->parent; //p是左孩子且双亲没有右孩子
+  else //p是左孩子且双亲有右孩子
+  {
+    q=p->parent->rchild;
+    while(q->lchild||!q->rtag)
+    {
+      if(q->lchild) q=q->lchild;
+      else q=q->rchild;
+    } //从p的双亲的右孩子向下走到底
+  return q;
+  }//else
+}//PostOrder_Next 
+6.58 
+Status Insert_BiThrTree(BiThrTree &T,BiThrTree &p,BiThrTree &x)//在中序线索二叉树T的结点p下插入子树x
+{
+  if(p->ltag) //x作为p的左子树
+  {
+    s=p->lchild; //s为p的前驱
+    p->ltag=Link; 
+    p->lchild=x; 
+    q=x; 
+    while(q->lchild&&!q->ltag) q=q->lchild; 
+    q->lchild=s; //找到子树中的最左结点,并修改其前驱指向s
+    x->rtag=Thread; 
+    x->rchild=p; //x的后继指向p
+  }
+  else if(p->rtag) //x作为p的右子树
+  {
+    s=p->rchild; //s为p的后继
+    p->rtag=Link; 
+    p->rchild=x; 
+    q=x; 
+    while(q->lchild&&!q->ltag) q=q->lchild; 
+    q->lchild=p; //找到子树中的最左结点,并修改其前驱指向p
+    x->rtag=Thread; 
+    x->rchild=s; //x的后继指向p的后继
+  }
+  else//x作为p的左子树,p的左子树作为x的右子树
+  {
+    s=p->lchild;t=s; 
+    while(t->lchild&&!t->ltag) t=t->lchild; 
+    u=t->lchild; //找到p的左子树的最左节点t和前驱u
+    p->lchild=x; 
+    x->rtag=Link; 
+    x->rchild=s; //x作为p的左子树,p的左子树s作为x的右子树
+    t->lchild=x; 
+    q=x; 
+    while(q->lchild&&!q->ltag) q=q->lchild; 
+    q->lchild=u; //找到子树中的最左结点,并修改其前驱指向u
+  }
+  return OK; 
+}//Insert_BiThrTree
+6.59 
+void Print_CSTree(CSTree T)//输出孩子兄弟链表表示的树T的各边
+{
+  for(child=T->firstchild;child;child=child->nextsib)
+  {
+    printf("(%c,%c),",T->data,child->data);
+    Print_CSTree(child);
+  }
+}//Print_CSTree 
+6.60 
+int LeafCount_CSTree(CSTree T)//求孩子兄弟链表表示的树T的叶子数目
+{
+  if(!T->firstchild) return 1; //叶子结点
+  else
+  {
+    count=0;
+    for(child=T->firstchild;child;child=child->nextsib)
+      count+=LeafCount_CSTree(child);
+    return count; //各子树的叶子数之和
+  }
+}//LeafCount_CSTree 
+6.61 
+int GetDegree_CSTree(CSTree T)//求孩子兄弟链表表示的树T的度
+{
+  if(!T->firstchild) return 0; //空树
+  else
+  {
+    degree=0;
+    for(p=T->firstchild;p;p=p->nextsib) degree++;//本结点的度
+    for(p=T->firstchild;p;p=p->nextsib)
+    {
+      d=GetDegree_CSTree(p);
+      if(d>degree) degree=d; //孩子结点的度的最大值
+    }
+    return degree;
+  }//else
+}//GetDegree_CSTree 
+6.62 
+int GetDepth_CSTree(CSTree T)//求孩子兄弟链表表示的树T的深度
+{
+  if(!T) return 0; //空树
+  else
+  {
+    for(maxd=0,p=T->firstchild;p;p=p->nextsib)
+      if((d=GetDepth_CSTree(p))>maxd) maxd=d; //子树的最大深度
+    return maxd+1;
+  }
+}//GetDepth_CSTree 
+6.63 
+int GetDepth_CTree(CTree A)//求孩子链表表示的树A的深度
+{
+  return SubDepth(A.r);
+}//GetDepth_CTree 
+int SubDepth(int T)//求子树T的深度
+{
+  if(!A.nodes[T].firstchild) return 1;
+  for(sd=1,p=A.nodes[T].firstchild;p;p=p->next)
+    if((d=SubDepth(p->child))>sd) sd=d;
+  return sd+1;
+}//SubDepth 
+6.64 
+int GetDepth_PTree(PTree T)//求双亲表表示的树T的深度
+{
+  maxdep=0;
+  for(i=0;i<T.n;i++)
+  {
+    dep=0;
+    for(j=i;j>=0;j=T.nodes[j].parent) dep++; //求每一个结点的深度
+    if(dep>maxdep) maxdep=dep;
+  }
+  return maxdep;
+}//GetDepth_PTree 
+6.65 
+char Pred,Ind; //假设前序序列和中序序列已经分别储存在数组Pre和In中 
+Bitree Build_Sub(int Pre_Start,int Pre_End,int In_Start,int In_End)//由子树的前序和中序序列建立其二叉链表
+{
+  sroot=(BTNode*)malloc(sizeof(BTNode)); //建根
+  sroot->data=Pre[Pre_Start];
+  for(i=In_Start;In[i]!=sroot->data;i++); //在中序序列中查找子树根
+  leftlen=i-In_Start;
+  rightlen=In_End-i; //计算左右子树的大小
+  if(leftlen)
+  {
+    lroot=Build_Sub(Pre_Start+1,Pre_Start+leftlen,In_Start,In_Start+leftlen-1);
+    sroot->lchild=lroot;
+  } //建左子树,注意参数表的计算
+  if(rightlen)
+  {
+    rroot=Build_Sub(Pre_End-rightlen+1,Pre_End,In_End-rightlen+1,In_End);
+    sroot->rchild=rroot;
+  } //建右子树,注意参数表的计算
+  return sroot; //返回子树根
+}//Build_Sub 
+main()
+{
+  ...
+  Build_Sub(1,n,1,n); //初始调用参数,n为树结点总数
+  ...
+}
+分析:本算法利用了这样一个性质,即一棵子树在前序和中序序列中所占的位置总是连续的.因此,就可以用起始下标和终止下标来确定一棵子树.Pre_Start,Pre_End,In_Start和In_End分别指示子树在前序子序列里的起始下标,终止下标,和在中序子序列里的起始和终止下标. 
+6.66 
+typedef struct{
+                    CSNode *ptr;
+                    CSNode *lastchild;
+                  } NodeMsg; //结点的指针和其最后一个孩子的指针 
+Status Build_CSTree_PTree(PTree T)//由树T的双亲表构造其孩子兄弟链表
+{
+  NodeMsg Tree[MAXSIZE];
+  for(i=0;i<T.n;i++)
+  {
+    Tree[i].ptr=(CSNode*)malloc(sizeof(CSNode));
+    Tree[i].ptr->data=T.node[i].data; //建结点
+    if(T.nodes[i].parent>=0) //不是树根
+    {
+      j=T.nodes[i].parent; //本算法要求双亲表必须是按层序存储
+      if(!(Tree[j].lastchild)) //双亲当前还没有孩子
+        Tree[j].ptr->firstchild=Tree[i].ptr; //成为双亲的第一个孩子
+      else //双亲已经有了孩子
+        Tree[j].lastchild->nextsib=Tree[i].ptr; //成为双亲最后一个孩子的下一个兄弟
+      Tree[j].lastchild=Tree[i].ptr; //成为双亲的最后一个孩子
+    }//if
+  }//for
+}//Build_CSTree_PTree 
+6.67 
+typedef struct{
+                char data;
+                CSNode *ptr;
+                CSNode *lastchild;
+              } NodeInfo; //结点数据,结点指针和最后一个孩子的指针 
+Status CreateCSTree_Duplet(CSTree &T)//输入二元组建立树的孩子兄弟链表
+{
+  NodeInfo Treed;
+  n=1;k=0;
+  if(getchar()!='^') return ERROR; //未按格式输入
+  if((c=getchar())=='^') T=NULL; //空树
+  Tree[0].ptr=(CSNode*)malloc(sizeof(CSNode));
+  Tree[0].data=c;
+  Tree[0].ptr->data=c;
+  while((p=getchar())!='^'&&(c=getchar())!='^')
+  {
+    Tree[n].ptr=(CSNode*)malloc(sizeof(CSNode));
+    Tree[n].data=c;
+    Tree[n].ptr->data=c;
+    for(k=0;Tree[k].data!=p;k++); //查找当前边的双亲结点
+    if(Tree[k].data!=p) return ERROR; //未找到:未按层序输入
+    r=Tree[k].ptr;
+    if(!r->firstchild)
+      r->firstchild=Tree[n].ptr;
+    else Tree[k].lastchild->nextsib=Tree[n].ptr;
+    Tree[k].lastchild=Tree[n].ptr; //这一段含义同上一题
+    n++;
+  }//while
+  return OK;
+}//CreateCSTree_Duplet 
+6.68 
+Status CreateCSTree_Degree(char node[ ],int degree[ ])//由结点的层序序列和各结点的度构造树的孩子兄弟链表
+{
+  CSNode * ptr[MAXSIZE]; //树结点指针的辅助存储
+  ptr[0]=(CSNode*)malloc(sizeof(CSNode));
+  i=0;k=1; //i为当前结点序号,k为当前孩子的序号
+  while(node[i])
+  {
+    ptr[i]->data=node[i];
+    d=degree[i];
+    if(d)
+    {
+      ptr[k]=(CSNode*)malloc(sizeof(CSNode)); //k为当前孩子的序号
+      ptr[i]->firstchild=ptr[k]; //建立i与第一个孩子k之间的联系
+      for(j=2;j<=d;j++)
+      {
+        ptr[k]=(CSNode*)malloc(sizeof(CSNode));
+        ptr[k-1]->nextsib=ptr[k]; //当结点的度大于1时,为其孩子建立兄弟链表
+        k++;
+      }//for
+     ptr[k-1]->nextsib=NULL;
+    }//if
+  i++;
+  }//while
+}//CreateCSTree_Degree 
+6.69 
+void Print_BiTree(BiTree T,int i)//按树状打印输出二叉树的元素,i表示结点所在层次,初次调用时i=0
+{
+  if(T->rchild) Print_BiTree(T->rchild,i+1);
+  for(j=1;j<=i;j++) printf(" "); //打印i个空格以表示出层次
+  printf("%c\n",T->data); //打印T元素,换行
+  if(T->lchild) Print_BiTree(T->rchild,i+1);
+}//Print_BiTree
+分析:该递归算法实际上是带层次信息的中序遍历,只不过按照题目要求,顺序为先右后左. 
+6.70 
+Status CreateBiTree_GList(BiTree &T)//由广义表形式的输入建立二叉链表
+{
+  c=getchar();
+  if(c=='#') T=NULL; //空子树
+  else
+  {
+    T=(CSNode*)malloc(sizeof(CSNode));
+    T->data=c;
+    if(getchar()!='(') return ERROR;
+    if(!CreateBiTree_GList(pl)) return ERROR;
+    T->lchild=pl;
+    if(getchar()!=',') return ERROR;
+    if(!CreateBiTree_GList(pr)) return ERROR;
+    T->rchild=pr;
+    if(getchar()!=')') return ERROR; //这些语句是为了保证输入符合A(B,C)的格式
+  }
+  return OK;
+}//CreateBiTree_GList 
+6.71 
+void Print_CSTree(CSTree T,int i)//按凹入表形式打印输出树的元素,i表示结点所在层次,初次调用时i=0
+{
+  for(j=1;j<=i;j++) printf(" "); //留出i个空格以表现出层次
+  printf("%c\n",T->data); //打印元素,换行
+  for(p=T->firstchild;p;p=p->nextsib)
+    Print_CSTree(p,i+1); //打印子树
+}//Print_CSTree 
+6.72 
+void Print_CTree(int e,int i)//按凹入表形式打印输出树的元素,i表示结点所在层次
+{
+  for(j=1;j<=i;j++) printf(" "); //留出i个空格以表现出层次
+  printf("%c\n",T.nodes[e].data); //打印元素,换行
+  for(p=T.nodes[e].firstchild;p;p=p->next)
+    Print_CSTree(p->child,i+1); //打印子树
+}//Print_CSTree 
+main()
+{
+  ...
+  Print_CTree(T.r,0); //初次调用时i=0
+  ...
+}//main 
+6.73 
+char c; //全局变量,指示当前字符 
+Status CreateCSTree_GList(CSTree &T)//由广义表形式的输入建立孩子兄弟链表
+{
+  c=getchar();
+  T=(CSNode*)malloc(sizeof(CSNode));
+  T->data=c;
+  if((c=getchar())=='(') //非叶结点
+  {
+    if(!CreateCSTree_GList(fc)) return ERROR; //建第一个孩子
+    T->firstchild=fc;
+    for(p=fc;c==',';p->nextsib=nc,p=nc) //建兄弟链
+      if(!CreateCSTree_GList(nc)) return ERROR;
+    p->nextsib=NULL;
+    if((c=getchar())!=')') return ERROR; //括号不配对
+  }
+  else T->firtchild=NULL; //叶子结点
+  return OK;
+}//CreateBiTree_GList
+分析:书后给出了两个间接递归的算法,事实上合成一个算法在形式上可能更好一些.本算法另一个改进之处在于加入了广义表格式是否合法的判断. 
+6.74 
+void PrintGlist_CSTree(CSTree T)//按广义表形式输出孩子兄弟链表表示的树
+{
+  printf("%c",T->data);
+  if(T->firstchild) //非叶结点
+  {
+    printf("(");
+    for(p=T->firstchild;p;p=p->nextsib)
+    {
+      PrintGlist_CSTree(p);
+      if(p->nextsib) printf(","); //最后一个孩子后面不需要加逗号
+    }
+    printf(")");
+  }//if
+}//PrintGlist_CSTree 
+6.75 
+char c;
+int pos=0; //pos是全局变量,指示已经分配到了哪个结点 
+Status CreateCTree_GList(CTree &T,int &i)//由广义表形式的输入建立孩子链表
+{
+  c=getchar();
+  T.nodes[pos].data=c;
+  i=pos++; //i是局部变量,指示当前正在处理的子树根
+  if((c=getchar())=='(') //非叶结点
+  {
+    CreateCTree_GList();
+    p=(CTBox*)malloc(sizeof(CTBox));
+    T.nodes[i].firstchild=p;
+    p->child=pos; //建立孩子链的头
+    for(;c==',';p=p->next) //建立孩子链
+    {
+      CreateCTree_GList(T,j); //用j返回分配得到的子树根位置
+      p->child=j;
+      p->next=(CTBox*)malloc(sizeof(CTBox));
+    }
+    p->next=NULL;
+    if((c=getchar())!=')') return ERROR; //括号不配对
+  }//if
+  else T.nodes[i].firtchild=NULL; //叶子结点
+  return OK;
+}//CreateBiTree_GList
+分析:该算法中,pos变量起着"分配"结点在表中的位置的作用,是按先序序列从上向下分配,因此树根T.r一定等于0,而最终的pos值就是结点数T.n. 
+6.76 
+void PrintGList_CTree(CTree T,int i)//按广义表形式输出孩子链表表示的树
+{
+  printf("%c",T.nodes[i].data);
+  if(T.nodes[i].firstchild) //非叶结点
+  {
+    printf("(");
+    for(p=T->firstchild;p;p=p->nextsib)
+    {
+      PrintGlist_CSTree(T,p->child);
+      if(p->nextsib) printf(","); //最后一个孩子后面不需要加逗号
+    }
+    printf(")");
+  }//if
+}//PrintGlist_CTree 
+

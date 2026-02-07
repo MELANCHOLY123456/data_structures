@@ -1,0 +1,408 @@
+第三章 栈与队列
+
+3.15 
+typedef struct{
+                    Elemtype *base[2];
+                    Elemtype *top[2];
+                  }BDStacktype; //双向栈类型 
+Status Init_Stack(BDStacktype &tws,int m)//初始化一个大小为m的双向栈tws
+{
+  tws.base[0]=(Elemtype*)malloc(sizeof(Elemtype));
+  tws.base[1]=tws.base[0]+m;
+  tws.top[0]=tws.base[0];
+  tws.top[1]=tws.base[1];
+  return OK;
+}//Init_Stack 
+Status push(BDStacktype &tws,int i,Elemtype x)//x入栈,i=0表示低端栈,i=1表示高端栈
+{
+  if(tws.top[0]>tws.top[1]) return OVERFLOW; //注意此时的栈满条件
+  if(i==0) *tws.top[0]++=x;
+  else if(i==1) *tws.top[1]--=x;
+  else return ERROR;
+  return OK;
+}//push 
+Status pop(BDStacktype &tws,int i,Elemtype &x)//x出栈,i=0表示低端栈,i=1表示高端栈
+{
+  if(i==0)
+  {
+    if(tws.top[0]==tws.base[0]) return OVERFLOW;
+    x=*--tws.top[0];
+  }
+  else if(i==1)
+  {
+    if(tws.top[1]==tws.base[1]) return OVERFLOW;
+    x=*++tws.top[1];
+  }
+  else return ERROR;
+  return OK;
+}//pop 
+3.16 
+void Train_arrange(char *train)//这里用字符串train表示火车,'H'表示硬席,'S'表示软席
+{
+  p=train;q=train;
+  InitStack(s);
+  while(*p)
+  {
+    if(*p=='H') push(s,*p); //把'H'存入栈中
+    else *(q++)=*p; //把'S'调到前部
+    p++;
+  }
+  while(!StackEmpty(s))
+  {
+    pop(s,c);
+    *(q++)=c; //把'H'接在后部
+  }
+}//Train_arrange 
+3.17 
+int IsReverse()//判断输入的字符串中'&'前和'&'后部分是否为逆串,是则返回1,否则返回0
+{
+  InitStack(s);
+  while((e=getchar())!='&')
+  {
+    if(e==’@’) return 0;//不允许在’&’之前出现’@’
+    push(s,e); 
+  }
+  while( (e=getchar())!='@')
+  {
+    if(StackEmpty(s)) return 0;
+    pop(s,c);
+    if(e!=c) return 0;
+  }
+  if(!StackEmpty(s)) return 0;
+  return 1;
+}//IsReverse 
+3.18 
+Status Bracket_Test(char *str)//判别表达式中小括号是否匹配
+{
+  count=0;
+  for(p=str;*p;p++)
+  {
+    if(*p=='(') count++;
+    else if(*p==')') count--;
+    if (count<0) return ERROR;
+  }
+  if(count) return ERROR; //注意括号不匹配的两种情况
+  return OK;
+}//Bracket_Test 
+3.19 
+Status AllBrackets_Test(char *str)//判别表达式中三种括号是否匹配
+{
+  InitStack(s);
+  for(p=str;*p;p++)
+  {
+    if(*p=='('||*p=='['||*p=='{') push(s,*p);
+    else if(*p==')'||*p==']'||*p=='}')
+    {
+      if(StackEmpty(s)) return ERROR;
+      pop(s,c);
+      if(*p==')'&&c!='(') return ERROR;
+      if(*p==']'&&c!='[') return ERROR;
+      if(*p=='}'&&c!='{') return ERROR; //必须与当前栈顶括号匹配
+    }
+  }//for
+  if(!StackEmpty(s)) return ERROR;
+  return OK;
+}//AllBrackets_Test 
+3.20 
+typedef struct {
+.             int x; 
+              int y; 
+            } coordinate;
+
+
+void Repaint_Color(int g[m][n],int i,int j,int color)//把点(i,j)相邻区域的颜色置换为color
+{
+  old=g[i][j];
+  InitQueue(Q);
+  EnQueue(Q,{I,j});
+  while(!QueueEmpty(Q))
+  {
+    DeQueue(Q,a);
+  x=a.x;y=a.y;
+    if(x>1)
+      if(g[x-1][y]==old)
+      {
+        g[x-1][y]=color;
+        EnQueue(Q,{x-1,y}); //修改左邻点的颜色
+      }
+    if(y>1)
+      if(g[x][y-1]==old)
+      {
+        g[x][y-1]=color;
+        EnQueue(Q,{x,y-1}); //修改上邻点的颜色
+      }
+    if(x<m)
+      if(g[x+1][y]==old)
+      {
+        g[x+1][y]=color;
+        EnQueue(Q,{x+1,y}); //修改右邻点的颜色
+      }
+    if(y<n)
+      if(g[x][y+1]==old)
+      {
+        g[x][y+1]=color;
+        EnQueue(Q,{x,y+1}); //修改下邻点的颜色
+      }
+  }//while
+}//Repaint_Color
+分析:本算法采用了类似于图的广度优先遍历的思想,用两个队列保存相邻同色点的横坐标和纵坐标.递归形式的算法该怎么写呢? 
+3.21 
+void NiBoLan(char *str,char *new)//把中缀表达式str转换成逆波兰式new
+{
+  p=str;q=new; //为方便起见,设str的两端都加上了优先级最低的特殊符号
+  InitStack(s); //s为运算符栈
+  while(*p)
+  {
+    if(*p是字母)) *q++=*p; //直接输出
+    else
+    {
+      c=gettop(s);
+      if(*p优先级比c高) push(s,*p);
+      else
+      {
+        while(gettop(s)优先级不比*p低)
+        {
+          pop(s,c);*(q++)=c;
+        }//while
+        push(s,*p); //运算符在栈内遵循越往栈顶优先级越高的原则
+      }//else
+    }//else
+    p++;
+  }//while
+}//NiBoLan //参见编译原理教材 
+3.22 
+int GetValue_NiBoLan(char *str)//对逆波兰式求值
+{
+  p=str;InitStack(s); //s为操作数栈
+  while(*p)
+  {
+    if(*p是数) push(s,*p);
+    else
+    {
+      pop(s,a);pop(s,b);
+      r=compute(b,*p,a); //假设compute为执行双目运算的过程
+      push(s,r);
+    }//else
+    p++;
+  }//while
+  pop(s,r);return r;
+}//GetValue_NiBoLan 
+3.23 
+Status NiBoLan_to_BoLan(char *str,stringtype &new)//把逆波兰表达式str转换为波兰式new
+{
+  p=str;Initstack(s); //s的元素为stringtype类型
+  while(*p)
+  {
+    if(*p为字母) push(s,*p);
+    else
+    {
+      if(StackEmpty(s)) return ERROR;
+      pop(s,a);
+      if(StackEmpty(s)) return ERROR;
+      pop(s,b);
+      c=link(link(*p,b),a);
+      push(s,c);
+    }//else
+    p++;
+  }//while
+  pop(s,new);
+  if(!StackEmpty(s)) return ERROR;
+  return OK;
+}//NiBoLan_to_BoLan
+分析:基本思想见书后注释.本题中暂不考虑串的具体操作的实现,而将其看作一种抽象数据类型stringtype,对其可以进行连接操作:c=link(a,b). 
+3.24 
+Status g(int m,int n,int &s)//求递归函数g的值s
+{
+  if(m==0&&n>=0) s=0;
+  else if(m>0&&n>=0) s=n+g(m-1,2*n);
+  else return ERROR;
+  return OK;
+}//g 
+3.25 
+Status F_recursive(int n,int &s)//递归算法
+{
+  if(n<0) return ERROR;
+  if(n==0) s=n+1;
+  else
+  {
+    F_recurve(n/2,r);
+    s=n*r;
+  }
+  return OK;
+}//F_recursive 
+Status F_nonrecursive(int n,int s)//非递归算法
+{
+  if(n<0) return ERROR;
+  if(n==0) s=n+1;
+  else
+  {
+    InitStack(s); //s的元素类型为struct {int a;int b;}
+    while(n!=0)
+    {
+      a=n;b=n/2;
+      push(s,{a,b});
+      n=b;
+    }//while
+    s=1;
+    while(!StackEmpty(s))
+    {
+      pop(s,t);
+      s*=t.a;
+    }//while
+  }
+  return OK;
+}//F_nonrecursive 
+3.26 
+float Sqrt_recursive(float A,float p,float e)//求平方根的递归算法
+{
+  if(abs(p^2-A)<=e) return p;
+  else return sqrt_recurve(A,(p+A/p)/2,e);
+}//Sqrt_recurve 
+float Sqrt_nonrecursive(float A,float p,float e)//求平方根的非递归算法
+{
+  while(abs(p^2-A)>=e)
+    p=(p+A/p)/2;
+  return p;
+}//Sqrt_nonrecursive 
+3.27 
+这一题的所有算法以及栈的变化过程请参见《数据结构(pascal版)》,作者不再详细写出. 
+3.28 
+void InitCiQueue(CiQueue &Q)//初始化循环链表表示的队列Q
+{
+  Q=(CiLNode*)malloc(sizeof(CiLNode));
+  Q->next=Q;
+}//InitCiQueue 
+void EnCiQueue(CiQueue &Q,int x)//把元素x插入循环链表表示的队列Q,Q指向队尾元素,Q->next指向头结点,Q->next->next指向队头元素
+{
+  p=(CiLNode*)malloc(sizeof(CiLNode));
+  p->data=x;
+  p->next=Q->next; //直接把p加在Q的后面
+  Q->next=p;
+  Q=p;  //修改尾指针
+} 
+Status DeCiQueue(CiQueue &Q,int x)//从循环链表表示的队列Q头部删除元素x
+{
+  if(Q==Q->next) return INFEASIBLE; //队列已空
+  p=Q->next->next;
+  x=p->data;
+  Q->next->next=p->next;
+  free(p);
+  return OK;
+}//DeCiQueue 
+3.29 
+Status EnCyQueue(CyQueue &Q,int x)//带tag域的循环队列入队算法
+{
+  if(Q.front==Q.rear&&Q.tag==1) //tag域的值为0表示"空",1表示"满"
+    return OVERFLOW;
+  Q.base[Q.rear]=x;
+  Q.rear=(Q.rear+1)%MAXSIZE;
+  if(Q.front==Q.rear) Q.tag=1; //队列满
+}//EnCyQueue 
+Status DeCyQueue(CyQueue &Q,int &x)//带tag域的循环队列出队算法
+{
+  if(Q.front==Q.rear&&Q.tag==0) return INFEASIBLE;
+  Q.front=(Q.front+1)%MAXSIZE;
+  x=Q.base[Q.front];
+  if(Q.front==Q.rear) Q.tag=1; //队列空
+  return OK;
+}//DeCyQueue
+分析:当循环队列容量较小而队列中每个元素占的空间较多时,此种表示方法可以节约较多的存储空间,较有价值. 
+3.30 
+Status EnCyQueue(CyQueue &Q,int x)//带length域的循环队列入队算法
+{
+  if(Q.length==MAXSIZE) return OVERFLOW;
+  Q.rear=(Q.rear+1)%MAXSIZE;
+  Q.base[Q.rear]=x;
+  Q.length++;
+  return OK;
+}//EnCyQueue 
+Status DeCyQueue(CyQueue &Q,int &x)//带length域的循环队列出队算法
+{
+  if(Q.length==0) return INFEASIBLE;
+  head=(Q.rear-Q.length+1)%MAXSIZE; //详见书后注释
+  x=Q.base[head];
+  Q.length--;
+}//DeCyQueue 
+3.31 
+int Palindrome_Test()//判别输入的字符串是否回文序列,是则返回1,否则返回0
+{
+  InitStack(S);InitQueue(Q);
+  while((c=getchar())!='@')
+  {
+    Push(S,c);EnQueue(Q,c); //同时使用栈和队列两种结构
+  }
+  while(!StackEmpty(S))
+  {
+    Pop(S,a);DeQueue(Q,b));
+    if(a!=b) return ERROR;
+  }
+  return OK;
+}//Palindrome_Test 
+3.32 
+void GetFib_CyQueue(int k,int n)//求k阶斐波那契序列的前n+1项
+{
+  InitCyQueue(Q); //其MAXSIZE设置为k
+  for(i=0;i<k-1;i++) Q.base[i]=0;
+  Q.base[k-1]=1; //给前k项赋初值
+  for(i=0;i<k;i++) printf("%d",Q.base[i]);
+  for(i=k;i<=n;i++)
+  {
+    m=i%k;sum=0;
+    for(j=0;j<k;j++) sum+=Q.base[(m+j)%k];
+    Q.base[m]=sum; //求第i项的值存入队列中并取代已无用的第一项
+    printf("%d",sum);
+  }
+}//GetFib_CyQueue 
+3.33 
+Status EnDQueue(DQueue &Q,int x)//输出受限的双端队列的入队操作
+{
+  if((Q.rear+1)%MAXSIZE==Q.front) return OVERFLOW; //队列满
+  avr=(Q.base[Q.rear-1]+Q.base[Q.front])/2;
+  if(x>=avr) //根据x的值决定插入在队头还是队尾
+  {
+    Q.base[Q.rear]=x;
+    Q.rear=(Q.rear+1)%MAXSIZE;
+  } //插入在队尾
+  else
+  {
+    Q.front=(Q.front-1)%MAXSIZE;
+    Q.base[Q.front]=x;
+  } //插入在队头
+  return OK;
+}//EnDQueue 
+Status DeDQueue(DQueue &Q,int &x)//输出受限的双端队列的出队操作
+{
+  if(Q.front==Q.rear) return INFEASIBLE; //队列空
+  x=Q.base[Q.front];
+  Q.front=(Q.front+1)%MAXSIZE;
+  return OK;
+}//DeDQueue 
+3.34 
+void Train_Rearrange(char *train)//这里用字符串train表示火车,'P'表示硬座,'H'表示硬卧,'S'表示软卧,最终按PSH的顺序排列
+{
+  r=train;
+  InitDQueue(Q);
+  while(*r)
+  {
+    if(*r=='P')
+    {
+      printf("E");
+      printf("D"); //实际上等于不入队列,直接输出P车厢
+    }
+    else if(*r=='S')
+    {
+      printf("E");
+      EnDQueue(Q,*r,0); //0表示把S车厢从头端入队列
+    }
+    else
+    {
+      printf("A");
+      EnDQueue(Q,*r,1); //1表示把H车厢从尾端入队列
+    }
+  }//while
+  while(!DQueueEmpty(Q))
+  {
+    printf("D");
+    DeDQueue(Q);
+  }//while //从头端出队列的车厢必然是先S后H的顺序 
+}//Train_Rearrange 

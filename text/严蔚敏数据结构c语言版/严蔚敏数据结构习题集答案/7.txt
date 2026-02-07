@@ -1,0 +1,856 @@
+第七章 图
+
+7.14 
+Status Build_AdjList(ALGraph &G)//输入有向图的顶点数,边数,顶点信息和边的信息建立邻接表
+{
+  InitALGraph(G);
+  scanf("%d",&v);
+  if(v<0) return ERROR; //顶点数不能为负
+  G.vexnum=v;
+  scanf("%d",&a);
+  if(a<0) return ERROR; //边数不能为负
+  G.arcnum=a;
+  for(m=0;m<v;m++)
+    G.vertices[m].data=getchar(); //输入各顶点的符号
+  for(m=1;m<=a;m++)
+  {
+    t=getchar();h=getchar(); //t为弧尾,h为弧头
+    if((i=LocateVex(G,t))<0) return ERROR;
+    if((j=LocateVex(G,h))<0) return ERROR; //顶点未找到
+    p=(ArcNode*)malloc(sizeof(ArcNode));
+    if(!G.vertices.[i].firstarc) G.vertices[i].firstarc=p;
+    else
+    {
+      for(q=G.vertices[i].firstarc;q->nextarc;q=q->nextarc);
+      q->nextarc=p;
+    }
+    p->adjvex=j;p->nextarc=NULL;
+  }//while
+  return OK;
+}//Build_AdjList 
+7.15 
+//本题中的图G均为有向无权图,其余情况容易由此写出
+Status Insert_Vex(MGraph &G, char v)//在邻接矩阵表示的图G上插入顶点v
+{
+  if(G.vexnum+1)>MAX_VERTEX_NUM return INFEASIBLE;
+  G.vexs[++G.vexnum]=v;
+  return OK;
+}//Insert_Vex 
+Status Insert_Arc(MGraph &G,char v,char w)//在邻接矩阵表示的图G上插入边(v,w)
+{
+  if((i=LocateVex(G,v))<0) return ERROR;
+  if((j=LocateVex(G,w))<0) return ERROR;
+  if(i==j) return ERROR;
+  if(!G.arcs[i][j].adj)
+  {
+    G.arcs[i][j].adj=1;
+    G.arcnum++;
+  }
+  return OK;
+}//Insert_Arc 
+Status Delete_Vex(MGraph &G,char v)//在邻接矩阵表示的图G上删除顶点v
+{
+  n=G.vexnum;
+  if((m=LocateVex(G,v))<0) return ERROR;
+  G.vexs[m]<->G.vexs[n]; //将待删除顶点交换到最后一个顶点
+  for(i=0;i<n;i++)
+  {
+    G.arcs[i][m]=G.arcs[i][n];
+    G.arcs[m][i]=G.arcs[n][i]; //将边的关系随之交换
+  }
+  G.arcs[m][m].adj=0;
+  G.vexnum--;
+  return OK;
+}//Delete_Vex
+分析:如果不把待删除顶点交换到最后一个顶点的话,算法将会比较复杂,而伴随着大量元素的移动,时间复杂度也会大大增加. 
+Status Delete_Arc(MGraph &G,char v,char w)//在邻接矩阵表示的图G上删除边(v,w)
+{
+  if((i=LocateVex(G,v))<0) return ERROR;
+  if((j=LocateVex(G,w))<0) return ERROR;
+  if(G.arcs[i][j].adj)
+  {
+    G.arcs[i][j].adj=0;
+    G.arcnum--;
+  }
+  return OK;
+}//Delete_Arc 
+7.16 
+//为节省篇幅,本题只给出Insert_Arc算法.其余算法请自行写出. 
+Status Insert_Arc(ALGraph &G,char v,char w)//在邻接表表示的图G上插入边(v,w)
+{
+  if((i=LocateVex(G,v))<0) return ERROR;
+  if((j=LocateVex(G,w))<0) return ERROR;
+  p=(ArcNode*)malloc(sizeof(ArcNode));
+  p->adjvex=j;p->nextarc=NULL;
+  if(!G.vertices[i].firstarc) G.vertices[i].firstarc=p;
+  else
+  {
+    for(q=G.vertices[i].firstarc;q->q->nextarc;q=q->nextarc)
+      if(q->adjvex==j) return ERROR; //边已经存在
+    q->nextarc=p;
+  }
+  G.arcnum++;
+  return OK;
+}//Insert_Arc 
+7.17 
+//为节省篇幅,本题只给出较为复杂的Delete_Vex算法.其余算法请自行写出. 
+Status Delete_Vex(OLGraph &G,char v)//在十字链表表示的图G上删除顶点v
+{
+  if((m=LocateVex(G,v))<0) return ERROR;
+  n=G.vexnum;
+  for(i=0;i<n;i++) //删除所有以v为头的边
+  {
+    if(G.xlist[i].firstin->tailvex==m) //如果待删除的边是头链上的第一个结点
+    {
+      q=G.xlist[i].firstin;
+      G.xlist[i].firstin=q->hlink;
+      free(q);G.arcnum--;
+    }
+    else //否则
+    {
+      for(p=G.xlist[i].firstin;p&&p->hlink->tailvex!=m;p=p->hlink);
+      if(p)
+      {
+        q=p->hlink;
+        p->hlink=q->hlink;
+        free(q);G.arcnum--;
+      }
+    }//else
+  }//for
+  for(i=0;i<n;i++) //删除所有以v为尾的边
+  {
+    if(G.xlist[i].firstout->headvex==m) //如果待删除的边是尾链上的第一个结点
+    {
+      q=G.xlist[i].firstout;
+      G.xlist[i].firstout=q->tlink;
+      free(q);G.arcnum--;
+    }
+    else //否则
+    {
+      for(p=G.xlist[i].firstout;p&&p->tlink->headvex!=m;p=p->tlink);
+      if(p)
+      {
+        q=p->tlink;
+        p->tlink=q->tlink;
+        free(q);G.arcnum--;
+      }
+    }//else
+  }//for
+  for(i=m;i<n;i++) //顺次用结点m之后的顶点取代前一个顶点
+  {
+    G.xlist[i]=G.xlist[i+1]; //修改表头向量
+    for(p=G.xlist[i].firstin;p;p=p->hlink)
+      p->headvex--;
+    for(p=G.xlist[i].firstout;p;p=p->tlink)
+      p->tailvex--; //修改各链中的顶点序号
+  }
+  G.vexnum--;
+  return OK;
+}//Delete_Vex 
+7.18 
+//为节省篇幅,本题只给出Delete_Arc算法.其余算法请自行写出. 
+Status Delete_Arc(AMLGraph &G,char v,char w)////在邻接多重表表示的图G上删除边(v,w)
+{
+  if((i=LocateVex(G,v))<0) return ERROR;
+  if((j=LocateVex(G,w))<0) return ERROR;
+  if(G.adjmulist[i].firstedge->jvex==j)
+    G.adjmulist[i].firstedge=G.adjmulist[i].firstedge->ilink;
+  else
+  {
+    for(p=G.adjmulist[i].firstedge;p&&p->ilink->jvex!=j;p=p->ilink);
+    if (!p) return ERROR; //未找到
+    p->ilink=p->ilink->ilink;
+  } //在i链表中删除该边
+  if(G.adjmulist[j].firstedge->ivex==i)
+    G.adjmulist[j].firstedge=G.adjmulist[j].firstedge->jlink;
+  else
+  {
+    for(p=G.adjmulist[j].firstedge;p&&p->jlink->ivex!=i;p=p->jlink);
+    if (!p) return ERROR; //未找到
+    q=p->jlink;
+    p->jlink=q->jlink;
+    free(q);
+  } //在i链表中删除该边
+  G.arcnum--;
+  return OK;
+}//Delete_Arc 
+7.19 
+Status Build_AdjMulist(AMLGraph &G)//输入有向图的顶点数,边数,顶点信息和边的信息建立邻接多重表
+{
+  InitAMLGraph(G);
+  scanf("%d",&v);
+  if(v<0) return ERROR; //顶点数不能为负
+  G.vexnum=v;
+  scanf(%d",&a);
+  if(a<0) return ERROR; //边数不能为负
+  G.arcnum=a;
+  for(m=0;m<v;m++)
+    G.adjmulist[m].data=getchar(); //输入各顶点的符号
+  for(m=1;m<=a;m++)
+  {
+    t=getchar();h=getchar(); //t为弧尾,h为弧头
+    if((i=LocateVex(G,t))<0) return ERROR;
+    if((j=LocateVex(G,h))<0) return ERROR; //顶点未找到
+    p=(EBox*)malloc(sizeof(EBox));
+    p->ivex=i;p->jvex=j;
+    p->ilink=NULL;p->jlink=NULL; //边结点赋初值
+    if(!G.adjmulist[i].firstedge) G.adjmulist[i].firstedge=p;
+    else
+    {
+      q=G.adjmulist[i].firstedge;
+      while(q)
+      {
+        r=q;
+        if(q->ivex==i) q=q->ilink;
+        else q=q->jlink;
+      }
+      if(r->ivex==i) r->ilink=p;//注意i值既可能出现在边结点的ivex域中,
+      else r->jlink=p; //又可能出现在边结点的jvex域中
+    }//else //插入i链表尾部
+    if(!G.adjmulist[j].firstedge) G.adjmulist[j].firstedge=p;
+    else
+    {
+      q=G.adjmulist[i].firstedge;
+      while(q)
+      {
+        r=q;
+        if(q->jvex==j) q=q->jlink;
+        else q=q->ilnk;
+      }
+      if(r->jvex==j) r->jlink=p;
+      else r->ilink=p;
+    }//else //插入j链表尾部
+  }//for
+  return OK;
+}//Build_AdjList 
+7.20 
+int Pass_MGraph(MGraph G)//判断一个邻接矩阵存储的有向图是不是可传递的,是则返回1,否则返回0
+{
+  for(x=0;x<G.vexnum;x++)
+    for(y=0;y<G.vexnum;y++)
+      if(G.arcs[x][y])
+      {
+        for(z=0;z<G.vexnum;z++)
+          if(z!=x&&G.arcs[y][z]&&!G.arcs[x][z]) return 0;//图不可传递的条件
+      }//if
+  return 1;
+}//Pass_MGraph
+分析:本算法的时间复杂度大概是O(n^2*d). 
+7.21 
+int Pass_ALGraph(ALGraph G)//判断一个邻接表存储的有向图是不是可传递的,是则返回1,否则返回0
+{
+  for(x=0;x<G.vexnum;x++)
+    for(p=G.vertices[x].firstarc;p;p=p->nextarc)
+    {
+      y=p->adjvex;
+      for(q=G.vertices[y].firstarc;q;q=q->nextarc)
+      {
+        z=q->adjvex;
+        if(z!=x&&!is_adj(G,x,z)) return 0;
+      }//for
+    }//for
+}//Pass_ALGraph 
+int is_adj(ALGraph G,int m,int n)//判断有向图G中是否存在边(m,n),是则返回1,否则返回0
+{
+  for(p=G.vertices[m].firstarc;p;p=p->nextarc)
+    if(p->adjvex==n) return 1;
+  return 0;
+}//is_adj 
+7.22 
+int visited[MAXSIZE]; //指示顶点是否在当前路径上 
+int exist_path_DFS(ALGraph G,int i,int j)//深度优先判断有向图G中顶点i到顶点j是否有路径,是则返回1,否则返回0
+{
+  if(i==j) return 1; //i就是j
+  else
+  {
+    visited[i]=1;
+    for(p=G.vertices[i].firstarc;p;p=p->nextarc)
+    {
+      k=p->adjvex;
+      if(!visited[k]&&exist_path(k,j)) return 1;//i下游的顶点到j有路径
+    }//for
+  }//else
+}//exist_path_DFS 
+7.23 
+int exist_path_BFS(ALGraph G,int i,int j)//广度优先判断有向图G中顶点i到顶点j是否有路径,是则返回1,否则返回0
+{
+  int visited[MAXSIZE];
+  InitQueue(Q);
+  EnQueue(Q,i);
+  while(!QueueEmpty(Q))
+  {
+    DeQueue(Q,u);
+    visited[u]=1;
+    for(p=G.vertices[i].firstarc;p;p=p->nextarc)
+    {
+      k=p->adjvex;
+      if(k==j) return 1;
+      if(!visited[k]) EnQueue(Q,k);
+    }//for
+  }//while
+  return 0;
+}//exist_path_BFS 
+7.24 
+void STraverse_Nonrecursive(Graph G)//非递归遍历强连通图G
+{
+  int visited[MAXSIZE];
+  InitStack(S);
+  Push(S,GetVex(S,1)); //将第一个顶点入栈
+  visit(1);
+  visited =1;
+  while(!StackEmpty(S))
+  {
+    while(Gettop(S,i)&&i)
+    {
+      j=FirstAdjVex(G,i);
+      if(j&&!visited[j])
+      {
+        visit(j);
+        visited[j]=1;
+        Push(S,j); //向左走到尽头
+      }
+    }//while
+    if(!StackEmpty(S))
+    {
+      Pop(S,j);
+      Gettop(S,i);
+      k=NextAdjVex(G,i,j); //向右走一步
+      if(k&&!visited[k])
+      {
+        visit(k);
+        visited[k]=1;
+        Push(S,k);
+      }
+    }//if
+  }//while
+}//Straverse_Nonrecursive
+分析:本算法的基本思想与二叉树的先序遍历非递归算法相同,请参考6.37.由于是强连通图,所以从第一个结点出发一定能够访问到所有结点. 
+7.25 
+见书后解答. 
+7.26 
+Status TopoNo(ALGraph G)//按照题目要求顺序重排有向图中的顶点
+{
+  int new[MAXSIZE],indegree[MAXSIZE]; //储存结点的新序号
+  n=G.vexnum;
+  FindInDegree(G,indegree);
+  InitStack(S);
+  for(i=1;i<G.vexnum;i++)
+    if(!indegree[i]) Push(S,i); //零入度结点入栈
+  count=0;
+  while(!StackEmpty(S))
+  {
+    Pop(S,i);
+    new[i]=n--; //记录结点的拓扑逆序序号
+    count++;
+    for(p=G.vertices[i].firstarc;p;p=p->nextarc)
+    {
+      k=p->adjvex;
+      if(!(--indegree[k])) Push(S,k);
+    }//for
+  }//while
+  if(count<G.vexnum) return ERROR; //图中存在环
+  for(i=1;i<=n;i++) printf("Old No:%d New No:%d\n",i,new[i])
+  return OK;
+}//TopoNo
+分析:只要按拓扑逆序对顶点编号,就可以使邻接矩阵成为下三角矩阵. 
+7.27 
+int visited[MAXSIZE]; 
+int exist_path_len(ALGraph G,int i,int j,int k)//判断邻接表方式存储的有向图G的顶点i到j是否存在长度为k的简单路径
+{
+  if(i==j&&k==0) return 1; //找到了一条路径,且长度符合要求
+  else if(k>0)
+  {
+    visited[i]=1;
+    for(p=G.vertices[i].firstarc;p;p=p->nextarc)
+    {
+      l=p->adjvex;
+      if(!visited[l])
+        if(exist_path_len(G,l,j,k-1)) return 1; //剩余路径长度减一
+    }//for
+    visited[i]=0; //本题允许曾经被访问过的结点出现在另一条路径中
+  }//else
+  return 0; //没找到
+}//exist_path_len 
+7.28 
+int path[MAXSIZE],visited[MAXSIZE]; //暂存遍历过程中的路径 
+int Find_All_Path(ALGraph G,int u,int v,int k)//求有向图G中顶点u到v之间的所有简单路径,k表示当前路径长度
+{
+  path[k]=u; //加入当前路径中
+  visited[u]=1;
+  if(u==v) //找到了一条简单路径
+  {
+    printf("Found one path!\n");
+    for(i=0;path[i];i++) printf("%d",path[i]); //打印输出
+  }
+  else
+    for(p=G.vertices[u].firstarc;p;p=p->nextarc)
+    {
+      l=p->adjvex;
+      if(!visited[l]) Find_All_Path(G,l,v,k+1); //继续寻找
+    }
+  visited[u]=0;
+  path[k]=0; //回溯
+}//Find_All_Path 
+main()
+{
+  ...
+  Find_All_Path(G,u,v,0); //在主函数中初次调用,k值应为0
+  ...
+}//main 
+7.29 
+int GetPathNum_Len(ALGraph G,int i,int j,int len)//求邻接表方式存储的有向图G的顶点i到j之间长度为len的简单路径条数
+{
+  if(i==j&&len==0) return 1; //找到了一条路径,且长度符合要求
+  else if(len>0)
+  {
+    sum=0; //sum表示通过本结点的路径数
+    visited[i]=1;
+    for(p=G.vertices[i].firstarc;p;p=p->nextarc)
+    {
+      l=p->adjvex;
+      if(!visited[l])
+        sum+=GetPathNum_Len(G,l,j,len-1)//剩余路径长度减一
+    }//for
+    visited[i]=0; //本题允许曾经被访问过的结点出现在另一条路径中
+  }//else
+  return sum;
+}//GetPathNum_Len 
+7.30 
+int visited[MAXSIZE];
+int path[MAXSIZE]; //暂存当前路径
+int cycles[MAXSIZE][MAXSIZE]; //储存发现的回路所包含的结点
+int thiscycle[MAXSIZE]; //储存当前发现的一个回路
+int cycount=0; //已发现的回路个数 
+void GetAllCycle(ALGraph G)//求有向图中所有的简单回路
+{
+  for(v=0;v<G.vexnum;v++) visited[v]=0;
+  for(v=0;v<G.vexnum;v++)
+    if(!visited[v]) DFS(G,v,0); //深度优先遍历
+}//DFSTraverse 
+void DFS(ALGraph G,int v,int k)//k表示当前结点在路径上的序号
+{
+  visited[v]=1;
+  path[k]=v; //记录当前路径
+  for(p=G.vertices[v].firstarc;p;p=p->nextarc)
+  {
+    w=p->adjvex;
+    if(!visited[w]) DFS(G,w,k+1);
+    else //发现了一条回路
+    {
+      for(i=0;path[i]!=w;i++); //找到回路的起点
+      for(j=0;path[i+j];i++) thiscycle[j]=path[i+j];//把回路复制下来
+      if(!exist_cycle()) cycles[cycount++]=thiscycle;//如果该回路尚未被记录过,就添加到记录中
+      for(i=0;i<G.vexnum;i++) thiscycle[i]=0; //清空目前回路数组
+    }//else
+  }//for
+  path[k]=0;
+  visited[k]=0; //注意只有当前路径上的结点visited为真.因此一旦遍历中发现当前结点visited为真,即表示发现了一条回路
+}//DFS 
+int exist_cycle()//判断thiscycle数组中记录的回路在cycles的记录中是否已经存在
+{
+  int temp[MAXSIZE];
+  for(i=0;i<cycount;i++) //判断已有的回路与thiscycle是否相同
+  { //也就是,所有结点和它们的顺序都相同
+    j=0;c=thiscycle&#0;; //例如,142857和857142是相同的回路
+    for(k=0;cycles[i][k]!=c&&cycles[i][k]!=0;k++);//在cycles的一个行向量中寻找等于thiscycle第一个结点的元素
+    if(cycles[i][k]) //有与之相同的一个元素
+    {
+      for(m=0;cycles[i][k+m];m++)
+        temp[m]=cycles[i][k+m];
+      for(n=0;n<k;n++,m++)
+        temp[m]=cycles[i][n]; //调整cycles中的当前记录的循环相位并放入temp数组中
+      if(!StrCompare(temp,thiscycle)) //与thiscycle比较
+        return 1; //完全相等
+      for(m=0;m<G.vexnum;m++) temp[m]=0; //清空这个数组
+    }
+  }//for
+  return 0; //所有现存回路都不与thiscycle完全相等
+}//exist_cycle
+分析:这个算法的思想是,在遍历中暂存当前路径,当遇到一个结点已经在路径之中时就表明存在一条回路;扫描路径向量path可以获得这条回路上的所有结点.把结点序列(例如,142857)存入thiscycle中;由于这种算法中,一条回路会被发现好几次,所以必须先判断该回路是否已经在cycles中被记录过,如果没有才能存入cycles的一个行向量中.把cycles的每一个行向量取出来与之比较.由于一条回路可能有多种存储顺序,比如142857等同于285714和571428,所以还要调整行向量的次序,并存入temp数组,例如,thiscycle为142857第一个结点为1,cycles的当前向量为857142,则找到后者中的1,把1后部分提到1前部分前面,最终在temp中得到142857,与thiscycle比较,发现相同,因此142857和857142是同一条回路,不予存储.这个算法太复杂,很难保证细节的准确性,大家理解思路便可.希望有人给出更加简捷的算法. 
+7.31 
+int visited[MAXSIZE];
+int finished[MAXSIZE];
+int count; //count在第一次深度优先遍历中用于指示finished数组的填充位置 
+void Get_SGraph(OLGraph G)//求十字链表结构储存的有向图G的强连通分量
+{
+  count=0;
+  for(v=0;v<G.vexnum;v++) visited[v]=0;
+  for(v=0;v<G.vexnum;v++) //第一次深度优先遍历建立finished数组
+    if(!visited[v]) DFS1(G,v);
+  for(v=0;v<G.vexnum;v++) visited[v]=0; //清空visited数组
+  for(i=G.vexnum-1;i>=0;i--) //第二次逆向的深度优先遍历
+  {
+    v=finished(i);
+    if(!visited[v])
+    {
+      printf("\n"); //不同的强连通分量在不同的行输出
+      DFS2(G,v);
+    }
+  }//for
+}//Get_SGraph 
+void DFS1(OLGraph G,int v)//第一次深度优先遍历的算法
+{
+  visited[v]=1;
+  for(p=G.xlist[v].firstout;p;p=p->tlink)
+  {
+    w=p->headvex;
+    if(!visited[w]) DFS1(G,w);
+  }//for
+  finished[++count]=v; //在第一次遍历中建立finished数组
+}//DFS1 
+void DFS2(OLGraph G,int v)//第二次逆向的深度优先遍历的算法
+{
+  visited[v]=1;
+  printf("%d",v); //在第二次遍历中输出结点序号
+  for(p=G.xlist[v].firstin;p;p=p->hlink)
+  {
+    w=p->tailvex;
+    if(!visited[w]) DFS2(G,w);
+  }//for
+}//DFS2
+分析:求有向图的强连通分量的算法的时间复杂度和深度优先遍历相同,也为O(n+e). 
+7.32 
+void Forest_Prim(ALGraph G,int k,CSTree &T)//从顶点k出发,构造邻接表结构的有向图G的最小生成森林T,用孩子兄弟链表存储
+{
+  for(j=0;j<G.vexnum;j++) //以下在Prim算法基础上稍作改动
+    if(j!=k)
+    {
+      closedge[j]={k,Max_int};
+      for(p=G.vertices[j].firstarc;p;p=p->nextarc)
+        if(p->adjvex==k) closedge[j].lowcost=p->cost;
+    }//if
+  closedge[k].lowcost=0;
+  for(i=1;i<G.vexnum;i++)
+  {
+    k=minimum(closedge);
+    if(closedge[k].lowcost<Max_int)
+    {
+      Addto_Forest(T,closedge[k].adjvex,k); //把这条边加入生成森林中
+      closedge[k].lowcost=0;
+      for(p=G.vertices[k].firstarc;p;p=p->nextarc)
+        if(p->cost<closedge[p->adjvex].lowcost)
+          closedge[p->adjvex]={k,p->cost};
+    }//if
+    else Forest_Prim(G,k); //对另外一个连通分量执行算法
+  }//for
+}//Forest_Prim 
+void Addto_Forest(CSTree &T,int i,int j)//把边(i,j)添加到孩子兄弟链表表示的树T中
+{
+  p=Locate(T,i); //找到结点i对应的指针p,过程略
+  q=(CSTNode*)malloc(sizeof(CSTNode));
+  q->data=j;
+  if(!p) //起始顶点不属于森林中已有的任何一棵树
+  {
+    p=(CSTNode*)malloc(sizeof(CSTNode));
+    p->data=i;
+    for(r=T;r->nextsib;r=r->nextsib);
+    r->nextsib=p;
+    p->firstchild=q;
+  } //作为新树插入到最右侧
+  else if(!p->firstchild) //双亲还没有孩子
+    p->firstchild=q; //作为双亲的第一个孩子
+  else //双亲已经有了孩子
+  {
+    for(r=p->firstchild;r->nextsib;r=r->nextsib);
+    r->nextsib=q; //作为双亲最后一个孩子的兄弟
+  }
+}//Addto_Forest 
+main()
+{
+  ...
+  T=(CSTNode*)malloc(sizeof(CSTNode)); //建立树根
+  T->data=1;
+  Forest_Prim(G,1,T);
+  ...
+}//main
+分析:这个算法是在Prim算法的基础上添加了非连通图支持和孩子兄弟链表构建模块而得到的,其时间复杂度为O(n^2). 
+7.33 
+typedef struct {
+                     int vex; //结点序号
+                     int ecno; //结点所属的连通分量号
+                   } VexInfo;
+VexInfo vexs[MAXSIZE]; //记录结点所属连通分量号的数组 
+void Init_VexInfo(VexInfo &vexs[ ],int vexnum)//初始化
+{
+  for(i=0;i<vexnum;i++)
+    vexs[i]={i,i}; //初始状态:每一个结点都属于不同的连通分量
+}//Init_VexInfo 
+int is_ec(VexInfo vexs[ ],int i,int j)//判断顶点i和顶点j是否属于同一个连通分量
+{
+  if(vexs[i].ecno==vexs[j].ecno) return 1;
+  else return 0;
+}//is_ec 
+void merge_ec(VexInfo &vexs[ ],int ec1,int ec2)//合并连通分量ec1和ec2
+{
+  for(i=0;vexs[i].vex;i++)
+    if(vexs[i].ecno==ec2) vexs[i].ecno==ec1;
+}//merge_ec 
+void MinSpanTree_Kruscal(Graph G,EdgeSetType &EdgeSet,CSTree &T)//求图的最小生成树的克鲁斯卡尔算法
+{
+  Init_VexInfo(vexs,G.vexnum);
+  ecnum=G.vexnum; //连通分量个数
+  while(ecnum>1)
+  {
+    GetMinEdge(EdgeSet,u,v); //选出最短边
+    if(!is_ec(vexs,u,v)) //u和v属于不同连通分量
+    {
+      Addto_CSTree(T,u,v); //加入到生成树中
+      merge_ec(vexs,vexs[u].ecno,vexs[v].ecno); //合并连通分量
+      ecnum--;
+    }
+    DelMinEdge(EdgeSet,u,v); //从边集中删除
+  }//while
+}//MinSpanTree_Kruscal 
+void Addto_CSTree(CSTree &T,int i,int j)//把边(i,j)添加到孩子兄弟链表表示的树T中
+{
+  p=Locate(T,i); //找到结点i对应的指针p,过程略
+  q=(CSTNode*)malloc(sizeof(CSTNode));
+  q->data=j;
+  if(!p->firstchild) //双亲还没有孩子
+    p->firstchild=q; //作为双亲的第一个孩子
+  else //双亲已经有了孩子
+  {
+    for(r=p->firstchild;r->nextsib;r=r->nextsib);
+    r->nextsib=q; //作为双亲最后一个孩子的兄弟
+  }
+}//Addto_CSTree
+分析:本算法使用一维结构体变量数组来表示等价类,每个连通分量所包含的所有结点属于一个等价类.在这个结构上实现了初始化,判断元素是否等价(两个结点是否属于同一个连通分量),合并等价类(连通分量)的操作. 
+7.34 
+Status TopoSeq(ALGraph G,int new[ ])//按照题目要求给有向无环图的结点重新编号,并存入数组new中
+{
+  int indegree[MAXSIZE]; //本算法就是拓扑排序
+  FindIndegree(G,indegree);
+  Initstack(S);
+  for(i=0;i<G.vexnum;i++)
+    if(!indegree[i]) Push(S,i);
+  count=0;
+  while(!stackempty(S))
+  {
+    Pop(S,i);new[i]=++count; //把拓扑顺序存入数组的对应分量中
+    for(p=G.vertices[i].firstarc;p;p=p->nextarc)
+    {
+      k=p->adjvex;
+      if(!(--indegree[k])) Push(S,k);
+    }
+  }//while
+  if(count<G.vexnum) return ERROR;
+  return OK;
+}//TopoSeq 
+7.35 
+int visited[MAXSIZE]; 
+void Get_Root(ALGraph G)//求有向无环图的根,如果有的话
+{
+  for(v=0;v<G.vexnum;v++)
+  {
+    for(w=0;w<G.vexnum;w++) visited[w]=0;//每次都要将访问数组清零
+    DFS(G,v); //从顶点v出发进行深度优先遍历
+    for(flag=1,w=0;w<G.vexnum;w++)
+      if(!visited[w]) flag=0; //如果v是根,则深度优先遍历可以访问到所有结点
+    if(flag) printf("Found a root vertex:%d\n",v);
+  }//for
+}//Get_Root,这个算法要求图中不能有环,否则会发生误判 
+void DFS(ALGraph G,int v)
+{
+  visited[v]=1;
+  for(p=G.vertices[v].firstarc;p;p=p->nextarc)
+  {
+    w=p->adjvex;
+    if(!visited[w]) DFS(G,w);
+  }
+}//DFS 
+7.36 
+void Fill_MPL(ALGraph &G)//为有向无环图G添加MPL域
+{
+  FindIndegree(G,indegree);
+  for(i=0;i<G.vexnum;i++)
+    if(!indegree[i]) Get_MPL(G,i);//从每一个零入度顶点出发构建MPL域
+}//Fill_MPL 
+int Get_MPL(ALGraph &G,int i)//从一个顶点出发构建MPL域并返回其MPL值
+{
+  if(!G.vertices[i].firstarc)
+  {
+    G.vertices[i].MPL=0;
+    return 0; //零出度顶点
+  }
+  else
+  {
+    max=0;
+    for(p=G.vertices[i].firstarc;p;p=p->nextarc)
+    {
+      j=p->adjvex;
+      if(G.vertices[j].MPL==0) k=Get_MPL(G,j);
+      if(k>max) max=k; //求其直接后继顶点MPL的最大者
+    }
+    G.vertices[i]=max+1;//再加一,就是当前顶点的MPL
+    return max+1;
+  }//else
+}//Get_MPL 
+7.37 
+int maxlen,path[MAXSIZE]; //数组path用于存储当前路径
+int mlp[MAXSIZE]; //数组mlp用于存储已发现的最长路径 
+void Get_Longest_Path(ALGraph G)//求一个有向无环图中最长的路径
+{
+  maxlen=0;
+  FindIndegree(G,indegree);
+  for(i=0;i<G.vexnum;i++)
+  {
+    for(j=0;j<G.vexnum;j++) visited[j]=0;
+    if(!indegree[i]) DFS(G,i,0);//从每一个零入度结点开始深度优先遍历
+  }
+  printf("Longest Path:");
+  for(i=0;mlp[i];i++) printf("%d",mlp[i]); //输出最长路径
+}//Get_Longest_Path 
+void DFS(ALGraph G,int i,int len)
+{
+  visited[i]=1;
+  path[len]=i;
+  if(len>maxlen&&!G.vertices[i].firstarc) //新的最长路径
+  {
+    for(j=0;j<=len;j++) mlp[j]=path[j]; //保存下来
+    maxlen=len;
+  }
+  else
+  {
+    for(p=G.vertices[i].firstarc;p;p=p->nextarc)
+    {
+      j=p->adjvex;
+      if(!visited[j]) DFS(G,j,len+1);
+    }
+  }//else
+  path[i]=0;
+  visited[i]=0;
+}//DFS 
+7.38 
+void NiBoLan_DAG(ALGraph G)//输出有向无环图形式表示的表达式的逆波兰式
+{
+  FindIndegree(G,indegree);
+  for(i=0;i<G.vexnum;i++)
+    if(!indegree[i]) r=i; //找到有向无环图的根
+  PrintNiBoLan_DAG(G,i);
+}//NiBoLan_DAG 
+void PrintNiBoLan_DAG(ALGraph G,int i)//打印输出以顶点i为根的表达式的逆波兰式
+{
+  c=G.vertices[i].data;
+  if(!G.vertices[i].firstarc) //c是原子
+    printf("%c",c);
+  else //子表达式
+  {
+    p=G.vertices[i].firstarc;
+    PrintNiBoLan_DAG(G,p->adjvex);
+    PrintNiBoLan_DAG(G,p->nexarc->adjvex);
+    printf("%c",c);
+  }
+}//PrintNiBoLan_DAG 
+7.39 
+void PrintNiBoLan_Bitree(Bitree T)//在二叉链表存储结构上重做上一题
+{
+  if(T->lchild) PrintNiBoLan_Bitree(T->lchild);
+  if(T->rchild) PrintNiBoLan_Bitree(T->rchild);
+  printf("%c",T->data);
+}//PrintNiBoLan_Bitree 
+7.40 
+int Evaluate_DAG(ALGraph G)//给有向无环图表示的表达式求值
+{
+  FindIndegree(G,indegree);
+  for(i=0;i<G.vexnum;i++)
+    if(!indegree[i]) r=i; //找到有向无环图的根
+  return Evaluate_imp(G,i);
+}//NiBoLan_DAG 
+int Evaluate_imp(ALGraph G,int i)//求子表达式的值
+{
+  if(G.vertices[i].tag=NUM) return G.vertices[i].value;
+  else
+  {
+    p=G.vertices[i].firstarc;
+    v1=Evaluate_imp(G,p->adjvex);
+    v2=Evaluate_imp(G,p->nextarc->adjvex);
+    return calculate(v1,G.vertices[i].optr,v2);
+  }
+}//Evaluate_imp
+分析:本题中,邻接表的vertices向量的元素类型修改如下:
+struct {
+         enum tag{NUM,OPTR};
+         union {
+                 int value;
+                 char optr;
+               };
+         ArcNode * firstarc;
+       } Elemtype; 
+7.41 
+void Critical_Path(ALGraph G)//利用深度优先遍历求网的关键路径
+{
+  FindIndegree(G,indegree);
+  for(i=0;i<G.vexnum;i++)
+    if(!indegree[i]) DFS1(G,i); //第一次深度优先遍历:建立ve
+  for(i=0;i<G.vexnum;i++)
+    if(!indegree[i]) DFS2(G,i); //第二次深度优先遍历:建立vl
+  for(i=0;i<=G.vexnum;i++)
+    if(vl[i]==ve[i]) printf("%d",i); //打印输出关键路径
+}//Critical_Path 
+void DFS1(ALGraph G,int i)
+{
+  if(!indegree[i]) ve[i]=0;
+  for(p=G.vertices[i].firstarc;p;p=p->nextarc)
+  {
+    dut=*p->info;
+    if(ve[i]+dut>ve[p->adjvex])
+      ve[p->adjvex]=ve[i]+dut;
+    DFS1(G,p->adjvex);
+  }
+}//DFS1 
+void DFS2(ALGraph G,int i)
+{
+  if(!G.vertices[i].firstarc) vl[i]=ve[i];
+  else
+  {
+    for(p=G.vertices[i].firstarc;p;p=p->nextarc)
+    {
+      DFS2(G,p->adjvex);
+      dut=*p->info;
+      if(vl[p->adjvex]-dut<vl[i])
+        vl[i]=vl[p->adjvex]-dut;
+    }
+  }//else
+}//DFS2 
+7.42 
+void ALGraph_DIJ(ALGraph G,int v0,Pathmatrix &P,ShortestPathTable &D)//在邻接表存储结构上实现迪杰斯特拉算法
+{
+  for(v=0;v<G.vexnum;v++)
+    D[v]=INFINITY;
+  for(p=G.vertices[v0].firstarc;p;p=p->nextarc)
+    D[p->adjvex]=*p->info; //给D数组赋初值
+  for(v=0;v<G.vexnum;v++)
+  {
+    final[v]=0;
+    for(w=0;w<G.vexnum;w++) P[v][w]=0; //设空路径
+    if(D[v]<INFINITY)
+    {
+      P[v][v0]=1;
+      P[v][v]=1;
+    }
+  }//for
+  D[v0]=0;final[v0]=1; //初始化
+  for(i=1;i<G.vexnum;i++)
+  {
+    min=INFINITY;
+    for(w=0;w<G.vexnum;w++)
+      if(!final[w])
+        if(D[w]<min) //尚未求出到该顶点的最短路径
+        {
+          v=w;
+          min=D[w];
+        }
+    final[v]=1;
+    for(p=G.vertices[v].firstarc;p;p=p->nextarc)
+    {
+      w=p->adjvex;
+      if(!final[w]&&(min+(*p->info)<D[w])) //符合迪杰斯特拉条件
+      {
+        D[w]=min+edgelen(G,v,w);
+        P[w]=P[v];
+        P[w][w]=1; //构造最短路径
+      }
+    }//for
+  }//for
+}//ALGraph_DIJ
+分析:本算法对迪杰斯特拉算法中直接取任意边长度的语句作了修改.由于在原算法中,每次循环都是对尾相同的边进行处理,所以可以用遍历邻接表中的一条链来代替. 

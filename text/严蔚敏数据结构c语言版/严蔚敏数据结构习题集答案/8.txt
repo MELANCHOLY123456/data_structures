@@ -1,0 +1,177 @@
+第八章 动态存储管理
+
+8.11 
+typedef struct {
+                     char *start;
+                     int size;
+                  } fmblock; //空闲块类型 
+char *Malloc_Fdlf(int n)//遵循最后分配者最先释放规则的内存分配算法
+{
+  while(Gettop(S,b)&&b.size<n)
+  {
+    Pop(S,b);
+    Push(T,b); //从栈顶逐个取出空闲块进行比较
+  }
+  if(StackEmpty(S)) return NULL; //没有大小足够的空闲块
+  Pop(S,b);
+  b.size-=n;
+  if(b.size) Push(S,{b.start+n,b.size});//分割空闲块
+  while(!StackEmpty(T))
+  {
+    Pop(T,a);
+    Push(S,a);
+  } //恢复原来次序
+  return b.start;
+}//Malloc_Fdlf 
+mem_init()//初始化过程
+{
+  ...
+  InitStack(S);InitStack(T); //S和T的元素都是fmblock类型
+  Push(S,{MemStart,MemLen}); //一开始,栈中只有一个内存整块
+  ...
+}//main 
+8.12 
+void Free_Fdlf(char *addr,int n)//与上一题对应的释放算法
+{
+  while(Gettop(S,b)&&b.start<addr)
+  {
+    Pop(S,b);
+    Push(T,b);
+  } //在按地址排序的栈中找到合适的插入位置
+  if(Gettop(T,b)&&(b.start+b.size==addr)) //可以与上邻块合并
+  {
+    Pop(T,b);
+    addr=b.start;n+=b.size;
+  }
+  if(Gettop(S,b)&&(addr+n==b.start)) //可以与下邻块合并
+  {
+    Pop(S,b);
+    n+=b.size;
+  }
+  Push(S,{addr,n}); //插入到空闲块栈中
+  while(!StackEmpty(T))
+  {
+    Pop(T,b);
+    Push(S,b);
+  } //恢复原来次序
+}//Free_Fdlf 
+8.13 
+void Free_BT(Space &pav,Space p)//在边界标识法的动态存储管理系统中回收空闲块p
+{
+  n=p->size;
+  f=p+n-1; //f指向空闲块底部
+  if((p-1)->tag&&(f+1)->tag) //回收块上下邻块均为占用块
+  {
+    p->tag=0;f->tag=0;
+    f->uplink=p;
+    if(!pav)
+    {
+      p->llink=p;
+      p->rlink=p;
+    }
+    else
+    {
+      q=pav->llink;
+      p->llink=q;p->rlink=pav;
+      q->rlink=p;pav->llink=p;
+    }
+    pav=p;
+  }//if
+  else if(!(p-1)->tag&&(f+1)->tag) //上邻块为空闲块
+  {
+    q=(p-1)->uplink;
+    q->size+=n;
+    f->uplink=q;
+    f->tag=0;
+  }
+  else if((p-1)->tag&&!(f+1)->tag) //下邻块为空闲块
+  {
+    q=f+1;
+    s=q->llink;t=q->rlink;
+    p->llink=s;p->rlink=t;
+    s->rlink=p;t->llink=p;
+    p->size+=q->size;
+    (q+q->size-1)->uplink=p;
+    p->tag=0;
+  }
+  else //上下邻块均为空闲块
+  {
+    s=(p-1)->uplink;
+    t=f+1;
+    s->size+=n+t->size;
+    t->llink->rlink=t->rlink;
+    t->rlink->llink=t->llink;
+    (t+t->size-1)->uplink=s;
+  }
+}//Free_BT,该算法在课本里有详细的描述. 
+8.14 
+void Free_BS(freelist &avail,char *addr,int n)//伙伴系统的空闲块回收算法
+{
+  buddy=addr%(2*n)?(addr-n)addr+n); //求回收块的伙伴地址
+  addr->tag=0;
+  addr->kval=n;
+  for(i=0;avail[i].nodesize<n;i++); //找到这一大小的空闲块链
+  if(!avail[i].first) //尚没有该大小的空闲块
+  {
+   addr->llink=addr;
+   addr->rlink=addr;
+   avail[i].first=addr; //作为唯一一个该大小的空闲块
+  }
+  else
+  {
+    for(p=avail[i].first;p!=buddy&&p!=avail[i].first;p=p->rlink);//寻找伙伴
+    if(p==buddy) //伙伴为空闲块,此时进行合并
+    {
+      if(p->rlink==p) avail[i].first=NULL;//伙伴是此大小的唯一空闲块
+      else
+      {
+        p->llink->rlink=p->rlink;
+        p->rlink->llink=p->llink;
+      } //从空闲块链中删去伙伴
+      new=addr>p?p:addr; //合并后的新块首址
+      Free_BS(avail,new,2*n); //递归地回收新块
+    }//if
+    else //伙伴为占用块,此时插入空闲块链头部
+    {
+      q=p->rlink;
+      p->rlink=addr;addr->llink=p;
+      q->llink=addr;addr->rlink=q;
+    }
+  }//else
+}//Free_BS 
+8.15 
+FBList *MakeList(char *highbound,char *lowbound)//把堆结构存储的的所有空闲块链接成可利用空间表,并返回表头指针
+{
+  p=lowbound;
+  while(p->tag&&p<highbound) p++; //查找第一个空闲块
+  if(p>=highbound) return NULL; //没有空闲块
+  head=p;
+  for(q=p;p<highbound;p+=cellsize) //建立链表
+    if(!p->tag)
+    {
+      q->next=p;
+      q=p;
+    }//if
+  p->next=NULL;
+  return head; //返回头指针
+}//MakeList 
+8.16 
+void Mem_Contract(Heap &H)//对堆H执行存储紧缩
+{
+  q=MemStart;j=0;
+  for(i=0;i<Max_ListLen;i++)
+    if(H.list[i].stadr->tag)
+    {
+      s=H.list[i].length;
+      p=H.list[i].stadr;
+      for(k=0;k<s;k++) *(q++)=*(p++); //紧缩内存空间
+      H.list[j].stadr=q;
+      H.list[j].length=s; //紧缩占用空间表
+      j++;
+    }
+}//Mem_Contract 
+
+
+ 
+
+

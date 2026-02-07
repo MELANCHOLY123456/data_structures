@@ -1,0 +1,600 @@
+第五章 数组和广义表
+
+5.18 
+void RSh(int A[n],int k)//把数组A的元素循环右移k位,只用一个辅助存储空间
+{
+  for(i=1;i<=k;i++)
+    if(n%i==0&&k%i==0) p=i;//求n和k的最大公约数p
+  for(i=0;i<p;i++) 
+  {
+    j=i;l=(i+n-k)%n;temp=A[i];
+    while(l!=i)
+    {
+      A[j]=A[l];
+      j=l;l=(j+n-k)%n;
+    }// 循环右移一步
+    A[j]=temp;
+  }//for
+}//RSh
+分析:要把A的元素循环右移k位,则A[0]移至A[k],A[k]移至A[2k]......直到最终回到A[0].然而这并没有全部解决问题,因为有可能有的元素在此过程中始终没有被访问过,而是被跳了过去.分析可知,当n和k的最大公约数为p时,只要分别以A[0],A[1],...A[p-1]为起点执行上述算法,就可以保证每一个元素都被且仅被右移一次,从而满足题目要求.也就是说,A的所有元素分别处在p个"循环链"上面.举例如下:
+n=15,k=6,则p=3.
+第一条链:A[0]->A[6],A[6]->A[12],A[12]->A[3],A[3]->A[9],A[9]->A[0].
+第二条链:A[1]->A[7],A[7]->A[13],A[13]->A[4],A[4]->A[10],A[10]->A[1].
+第三条链:A[2]->A[8],A[8]->A[14],A[14]->A[5],A[5]->A[11],A[11]->A[2].
+恰好使所有元素都右移一次.
+虽然未经数学证明,但作者相信上述规律应该是正确的. 
+5.19 
+void Get_Saddle(int A[m][n])//求矩阵A中的马鞍点
+{
+  for(i=0;i<m;i++)
+  {
+    for(min=A[i][0],j=0;j<n;j++)
+      if(A[i][j]<min) min=A[i][j]; //求一行中的最小值
+    for(j=0;j<n;j++)
+      if(A[i][j]==min) //判断这个(些)最小值是否鞍点
+      {
+        for(flag=1,k=0;k<m;k++)
+          if(min<A[k][j]) flag=0;
+        if(flag)
+          printf("Found a saddle element!\nA[%d][%d]=%d",i,j,A[i][j]);
+      }
+  }//for
+}//Get_Saddle 
+5.20 
+int exps[MAXSIZE]; //exps数组用于存储某一项的各变元的指数
+int maxm,n; //maxm指示变元总数,n指示一个变元的最高指数 
+void Print_Poly_Descend(int *a,int m)//按降幂顺序输出m元多项式的项，各项的系数已经按照题目要求存储于m维数组中，数组的头指针为a
+{
+  maxm=m;
+  for(i=m*n;i>=0;i--) //按降幂次序,可能出现的最高项次数为mn
+    Get_All(a,m,i,0); //确定并输出所有次数为i的项
+}//Print_Poly_Descend 
+void Get_All(int *a,int m,int i,int seq)//递归求出所有和为i的m个自然数
+{
+  if(seq==maxm) Print_Nomial(a,exps); //已经求完时,输出该项
+  else
+  {
+    min=i-(m-1)*n; //当前数不能小于min
+    if(min<0) min=0;
+    max=n<i?n:i; //当前数不能大于max
+    for(j=min;j<=max;j++)
+    {
+      exps[seq]=j; //依次取符合条件的数
+      Get_All(a,m-1,i-j,seq+1); //取下一个数
+    }
+  }//else
+  exps[seq]=0; //返回
+}//Get_All 
+void Print_Nomial(int *a,int exps[ ])//输出一个项,项的各变元的指数已经存储在数组exps中
+{
+  pos=0;
+  for(i=0;i<maxm;i++) //求出该项的系数在m维数组a中低下标优先的存储位置pos
+  {
+    pos*=n;
+    pos+=exps[i];
+  }
+  coef=*(a+pos); //取得该系数coef
+  if(!coef) return; //该项为0时无需输出
+  else if(coef>0) printf("+"); //系数为正时打印加号
+  else if(coef<0) printf("-"); //系数为负时打印减号
+  if(abs(coef)!=1) printf("%d",abs(coef)); //当系数的绝对值不为1时打印系数
+  for(i=0;i<maxm;i++)
+    if(exps[i]) //打印各变元及其系数
+    {
+      printf("x");
+      printf("%d",i);
+      printf("E");
+      if(exps[i]>1) printf("%d",exp[i]); //系数为1时无需打印
+    }
+}//Print_Nomial
+分析:本算法的关键在于如何按照降幂顺序输出各项.这里采用了一个递归函数来找到所有满足和为i的m个自然数作为各变元的指数.只要先取第一个数为j,然后再找到所有满足和为i-j的m-1个自然数就行了.要注意j的取值范围必须使剩余m-1个自然数能够找到,所以不能小于i-(m-1)*maxn,也不能大于i.只要找到了一组符合条件的数,就可以在存储多项式系数的数组中确定对应的项的系数的位置,并且在系数不为0时输出对应的项.
+
+5.21 
+void TSMatrix_Add(TSMatrix A,TSMatrix B,TSMatrix &C)//三元组表示的稀疏矩阵加法
+{
+  C.mu=A.mu;C.nu=A.nu;C.tu=0;
+  pa=1;pb=1;pc=1;
+  for(x=1;x<=A.mu;x++) //对矩阵的每一行进行加法
+  {
+    while(A.data[pa].i<x) pa++;
+    while(B.data[pb].i<x) pb++;
+    while(A.data[pa].i==x&&B.data[pb].i==x)//行列值都相等的元素
+    {
+      if(A.data[pa].j==B.data[pb].j)
+      {
+        ce=A.data[pa].e+B.data[pb].e;
+        if(ce) //和不为0
+        {
+          C.data[pc].i=x;
+          C.data[pc].j=A.data[pa].j;
+          C.data[pc].e=ce;
+          pa++;pb++;pc++;
+        }
+      }//if
+      else if(A.data[pa].j>B.data[pb].j) 
+      {
+        C.data[pc].i=x;
+        C.data[pc].j=B.data[pb].j;
+        C.data[pc].e=B.data[pb].e;
+        pb++;pc++;
+      }
+      else
+      {
+        C.data[pc].i=x;
+        C.data[pc].j=A.data[pa].j;
+        C.data[pc].e=A.data[pa].e
+        pa++;pc++;
+      }
+    }//while
+    while(A.data[pa]==x) //插入A中剩余的元素(第x行)
+    {
+      C.data[pc].i=x;
+      C.data[pc].j=A.data[pa].j;
+      C.data[pc].e=A.data[pa].e
+      pa++;pc++;
+    }
+    while(B.data[pb]==x) //插入B中剩余的元素(第x行)
+    {
+      C.data[pc].i=x;
+      C.data[pc].j=B.data[pb].j;
+      C.data[pc].e=B.data[pb].e;
+      pb++;pc++;
+    }
+  }//for
+  C.tu=pc;
+}//TSMatrix_Add 
+5.22 
+void TSMatrix_Addto(TSMatrix &A,TSMatrix B)//将三元组矩阵B加到A上
+{
+  for(i=1;i<=A.tu;i++)
+    A.data[MAXSIZE-A.tu+i]=A.data[i];/把A的所有元素都移到尾部以腾出位置
+  pa=MAXSIZE-A.tu+1;pb=1;pc=1;
+  for(x=1;x<=A.mu;x++) //对矩阵的每一行进行加法
+  {
+    while(A.data[pa].i<x) pa++;
+    while(B.data[pb].i<x) pb++;
+    while(A.data[pa].i==x&&B.data[pb].i==x)//行列值都相等的元素
+    {
+      if(A.data[pa].j==B.data[pb].j)
+      {
+        ne=A.data[pa].e+B.data[pb].e;
+        if(ne) //和不为0
+        {
+          A.data[pc].i=x;
+          A.data[pc].j=A.data[pa].j;
+          A.data[pc].e=ne;
+          pa++;pb++;pc++;
+        }
+      }//if
+      else if(A.data[pa].j>B.data[pb].j) 
+      {
+        A.data[pc].i=x;
+        A.data[pc].j=B.data[pb].j;
+        A.data[pc].e=B.data[pb].e;
+        pb++;pc++;
+      }
+      else
+      {
+        A.data[pc].i=x;
+        A.data[pc].j=A.data[pa].j;
+        A.data[pc].e=A.data[pa].e
+        pa++;pc++;
+      }
+    }//while
+    while(A.data[pa]==x) //插入A中剩余的元素(第x行)
+    {
+      A.data[pc].i=x;
+      A.data[pc].j=A.data[pa].j;
+      A.data[pc].e=A.data[pa].e
+      pa++;pc++;
+    }
+    while(B.data[pb]==x) //插入B中剩余的元素(第x行)
+    {
+      A.data[pc].i=x;
+      A.data[pc].j=B.data[pb].j;
+      A.data[pc].e=B.data[pb].e;
+      pb++;pc++;
+    }
+  }//for
+  A.tu=pc;
+  for(i=A.tu;i<MAXSIZE;i++) A.data[i]={0,0,0}; //清除原来的A中记录
+}//TSMatrix_Addto 
+5.23 
+typedef struct{
+                    int j;
+                    int e;
+                  } DSElem; 
+typedef struct{
+                DSElem data[MAXSIZE];
+                int cpot[MAXROW];//这个向量存储每一行在二元组中的起始位置
+                int mu,nu,tu;
+              } DSMatrix; //二元组矩阵类型 
+Status DSMatrix_Locate(DSMatrix A,int i,int j,int &e)//求二元组矩阵的元素A[i][j]的值e
+{
+  for(s=A.cpot[i];s<A.cpot[i+1]&&A.data[s].j!=j;s++);//注意查找范围
+  if(s<A.cpot[i+1]&&A.data[s].j==j) //找到了元素A[i][j]
+  {
+    e=A.data[s];
+    return OK;
+  }
+  return ERROR;
+}//DSMatrix_Locate 
+5.24 
+typedef struct{
+                    int seq; //该元素在以行为主序排列时的序号
+                    int e;
+                  } SElem; 
+typedef struct{
+                    SElem data[MAXSIZE];
+                    int mu,nu,tu;
+                  } SMatrix; //单下标二元组矩阵类型 
+Status SMatrix_Locate(SMatrix A,int i,int j,int &e)//求单下标二元组矩阵的元素A[i][j]的值e
+{
+  s=i*A.nu+j+1;p=1;
+  while(A.data[p].seq<s) p++; //利用各元素seq值逐渐递增的特点
+  if(A.data[p].seq==s) //找到了元素A[i][j]
+  {
+    e=A.data[p].e;
+    return OK;
+  }
+  return ERROR;
+}//SMatrix_Locate 
+5.25 
+typedef enum{0,1} bool; 
+typedef struct{
+                    int mu,nu;
+                    int elem[MAXSIZE];
+                    bool map[mu][nu];
+                  } BMMatrix; //用位图表示的矩阵类型 
+void BMMatrix_Add(BMMatrix A,BMMatrix B,BMMatrix &C)//位图矩阵的加法
+{
+  C.mu=A.mu;C.nu=A.nu;
+  pa=1;pb=1;pc=1;
+  for(i=0;i<A.mu;i++) //每一行的相加
+    for(j=0;j<A.nu;j++) //每一个元素的相加
+    {
+      if(A.map[i][j]&&B.map[i][j]&&(A.elem[pa]+B.elem[pb]))//结果不为0
+      {
+        C.elem[pc]=A.elem[pa]+B.elem[pb];
+        C.map[i][j]=1;
+        pa++;pb++;pc++;
+      }
+      else if(A.map[i][j]&&!B.map[i][j])
+      {
+        C.elem[pc]=A.elem[pa];
+        C.map[i][j]=1;
+        pa++;pc++;
+      }
+      else if(!A.map[i][j]&&B.map[i][j])
+      {
+        C.elem[pc]=B.elem[pb];
+        C.map[i][j]=1;
+        pb++;pc++;
+      }
+    }
+}//BMMatrix_Add 
+5.26 
+void Print_OLMatrix(OLMatrix A)//以三元组格式输出十字链表表示的矩阵
+{
+  for(i=0;i<A.mu;i++)
+  {
+    if(A.rhead[i])
+      for(p=A.rhead[i];p;p=p->right) //逐次遍历每一个行链表
+        printf("%d %d %d\n",i,p->j,p->e;
+  }
+}//Print_OLMatrix 
+5.27 
+void OLMatrix_Add(OLMatrix &A,OLMatrix B)//把十字链表表示的矩阵B加到A上
+{
+  for(j=1;j<=A.nu;j++) cp[j]=A.chead[j]; //向量cp存储每一列当前最后一个元素的指针
+  for(i=1;i<=A.mu;i++)
+  {
+    pa=A.rhead[i];pb=B.rhead[i];pre=NULL;
+    while(pb)
+    {
+      if(pa==NULL||pa->j>pb->j) //新插入一个结点
+      {
+        p=(OLNode*)malloc(sizeof(OLNode));
+        if(!pre) A.rhead[i]=p;
+        else pre->right=p;
+        p->right=pa;pre=p;
+        p->i=i;p->j=pb->j;p->e=pb->e; //插入行链表中
+        if(!A.chead[p->j])
+        {
+          A.chead[p->j]=p;
+          p->down=NULL;
+        }
+        else
+        {
+          while(cp[p->j]->down) cp[p->j]=cp[p->j]->down;
+          p->down=cp[p->j]->down;
+          cp[p->j]->down=p;
+        }
+        cp[p->j]=p; //插入列链表中
+      }//if
+      else if(pa->j<pb->j)
+      {
+        pre=pa;
+        pa=pa->right;
+      } //pa右移一步
+      else if(pa->e+pb->e)
+      {
+        pa->e+=pb->e;
+        pre=pa;pa=pa->right;
+        pb=pb->right;
+      } //直接相加
+      else
+      {
+        if(!pre) A.rhead[i]=pa->right;
+        else pre->right=pa->right;
+        p=pa;pa=pa->right; //从行链表中删除
+        if(A.chead[p->j]==p)
+          A.chead[p->j]=cp[p->j]=p->down;
+        else cp[p->j]->down=p->down; //从列链表中删除
+        free (p);
+      }//else
+    }//while
+  }//for
+}//OLMatrix_Add
+分析:本题的具体思想在课本中有详细的解释说明. 
+5.28 
+void MPList_PianDao(MPList &L)//对广义表存储结构的多元多项式求第一变元的偏导
+{
+  for(p=L->hp->tp;p&&p->exp;pre=p,p=p->tp)
+  {
+    if(p->tag) Mul(p->hp,p->exp);
+    else p->coef*=p->exp; //把指数乘在本结点或其下属结点上
+    p->exp--;
+  }
+  pre->tp=NULL;
+  if(p) free (p); //删除可能存在的常数项
+}//MPList_PianDao 
+void Mul(MPList &L,int x)//递归算法,对多元多项式L乘以x
+{
+  for(p=L;p;p=p->tp)
+  {
+    if(!p->tag) p->coef*=x;
+    else Mul(p->hp,x);
+  }
+}//Mul
+    
+5.29 
+void MPList_Add(MPList A,MPList B,MPList &C)//广义表存储结构的多项式相加的递归算法
+{
+  C=(MPLNode*)malloc(sizeof(MPLNode));
+  if(!A->tag&&!B->tag) //原子项,可直接相加
+  {
+    C->coef=A->coef+B->coef;
+    if(!C->coef)
+    {
+      free(C);
+      C=NULL;
+    }
+  }//if
+  else if(A->tag&&B->tag) //两个多项式相加
+  {
+    p=A;q=B;pre=NULL;
+    while(p&&q)
+    {
+      if(p->exp==q->exp)
+      {
+        C=(MPLNode*)malloc(sizeof(MPLNode));
+        C->exp=p->exp;
+        MPList_Add(A->hp,B->hp,C->hp);
+        pre->tp=C;pre=C;
+        p=p->tp;q=q->tp;
+      }
+      else if(p->exp>q->exp)
+      {
+        C=(MPLNode*)malloc(sizeof(MPLNode));
+        C->exp=p->exp;
+        C->hp=A->hp;
+        pre->tp=C;pre=C;
+        p=p->tp;
+      }
+      else
+      {
+        C=(MPLNode*)malloc(sizeof(MPLNode));
+        C->exp=q->exp;
+        C->hp=B->hp;
+        pre->tp=C;pre=C;
+        q=q->tp;
+      }
+    }//while
+    while(p)
+    {
+      C=(MPLNode*)malloc(sizeof(MPLNode));
+      C->exp=p->exp;
+      C->hp=p->hp;
+      pre->tp=C;pre=C;
+      p=p->tp;
+    }
+    while(q)
+    {
+      C=(MPLNode*)malloc(sizeof(MPLNode));
+      C->exp=q->exp;
+      C->hp=q->hp;
+      pre->tp=C;pre=C;
+      q=q->tp;
+    } //将其同次项分别相加得到新的多项式,原理见第二章多项式相加一题
+  }//else if
+  else if(A->tag&&!B->tag) //多项式和常数项相加
+  {
+    x=B->coef;
+    for(p=A;p->tp->tp;p=p->tp);
+    if(p->tp->exp==0) p->tp->coef+=x; //当多项式中含有常数项时,加上常数项
+    if(!p->tp->coef)
+    {
+      free(p->tp);
+      p->tp=NULL;
+    }
+    else
+    {
+      q=(MPLNode*)malloc(sizeof(MPLNode));
+      q->coef=x;q->exp=0;
+      q->tag=0;q->tp=NULL;
+      p->tp=q;
+    } //否则新建常数项,下同
+  }//else if
+  else
+  {
+    x=A->coef;
+    for(p=B;p->tp->tp;p=p->tp);
+    if(p->tp->exp==0) p->tp->coef+=x;
+    if(!p->tp->coef)
+    {
+      free(p->tp);
+      p->tp=NULL;
+    }
+    else
+    {
+      q=(MPLNode*)malloc(sizeof(MPLNode));
+      q->coef=x;q->exp=0;
+      q->tag=0;q->tp=NULL;
+      p->tp=q;
+    }
+  }//else
+}//MPList_Add 
+5.30 
+int GList_Getdeph(GList L)//求广义表深度的递归算法
+{
+  if(!L->tag) return 0; //原子深度为0
+  else if(!L) return 1; //空表深度为1
+  m=GList_Getdeph(L->ptr.hp)+1;
+  n=GList_Getdeph(L->ptr.tp);
+  return m>n?m:n;
+}//GList_Getdeph 
+5.31 
+void GList_Copy(GList A,GList &B)//复制广义表的递归算法
+{
+  if(!A->tag) //当结点为原子时,直接复制
+  {
+    B->tag=0;
+    B->atom=A->atom;
+  }
+  else //当结点为子表时
+  {
+    B->tag=1;
+    if(A->ptr.hp)
+    {
+      B->ptr.hp=malloc(sizeof(GLNode));
+      GList_Copy(A->ptr.hp,B->ptr.hp);
+    } //复制表头
+    if(A->ptr.tp)
+    {
+      B->ptr.tp=malloc(sizeof(GLNode));
+      GList_Copy(A->ptr.tp,B->ptr.tp);
+    } //复制表尾
+  }//else
+}//GList_Copy 
+5.32 
+int GList_Equal(GList A,GList B)//判断广义表A和B是否相等,是则返回1,否则返回0
+{ //广义表相等可分三种情况:
+  if(!A&&!B) return 1; //空表是相等的
+  if(!A->tag&&!B->tag&&A->atom==B->atom) return 1;//原子的值相等
+  if(A->tag&&B->tag)
+    if(GList_Equal(A->ptr.hp,B->ptr.hp)&&GList_Equal(A->ptr.tp,B->ptr.tp))
+      return 1; //表头表尾都相等
+  return 0;
+}//GList_Equal 
+5.33 
+void GList_PrintElem(GList A,int layer)//递归输出广义表的原子及其所在层次,layer表示当前层次
+{
+  if(!A) return;
+  if(!A->tag) printf("%d %d\n",A->atom,layer);
+  else
+  {
+    GList_PrintElem(A->ptr.hp,layer+1);
+    GList_PrintElem(A->ptr.tp,layer); //注意尾表与原表是同一层次
+  }
+}//GList_PrintElem 
+5.34 
+void GList_Reverse(GList A)//递归逆转广义表A
+{
+  GLNode *ptr[MAX_SIZE];
+  if(A->tag&&A->ptr.tp) //当A不为原子且表尾非空时才需逆转
+  {
+    for(i=0,p=A;p;p=p->ptr.tp,i++)
+    {
+      if(p->ptr.hp) GList_Reverse(p->ptr.hp);        //逆转各子表
+      ptr[i]=p->ptr.hp; 
+    }
+    for(p=A;p;p=p->ptr.tp)        //重新按逆序排列各子表的顺序
+      p->ptr.hp=ptr[--i];
+  }
+}//GList_Reverse 
+5.35 
+Status Create_GList(GList &L)//根据输入创建广义表L,并返回指针
+{
+  scanf("%c",&ch);
+  if(ch==' ')
+  {
+    L=NULL;
+    scanf("%c",&ch);
+    if(ch!=')') return ERROR;
+    return OK;
+  }
+  L=(GList)malloc(sizeof(GLNode));
+  L->tag=1;
+  if(isalphabet(ch)) //输入是字母
+  {
+    p=(GList)malloc(sizeof(GLNode)); //建原子型表头
+    p->tag=0;p->atom=ch;
+    L->ptr.hp=p;
+  }
+  else if(ch=='(') Create_GList(L->ptr.hp); //建子表型表头
+  else return ERROR;
+  scanf ("%c",&ch);
+  if(ch==')') L->ptr.tp=NULL;
+  else if(ch==',') Create_GList(L->ptr.tp); //建表尾 
+  else return ERROR;
+  return OK;
+}//Create_GList
+分析:本题思路见书后解答. 
+5.36 
+void GList_PrintList(GList A)//按标准形式输出广义表
+{
+  if(!A) printf("()"); //空表
+  else if(!A->tag) printf("%d",A->atom);//原子
+  else
+  {
+    printf("(");
+    for(p=A;p;p=p->ptr.tp) 
+    {
+      GList_PrintList(p->ptr.hp);
+       if(p->ptr.tp) printf(",");        //只有当表尾非空时才需要打印逗号
+    } 
+    printf(")");
+  }//else
+}//GList_PrintList 
+5.37 
+void GList_DelElem(GList &A,int x)//从广义表A中删除所有值为x的原子
+{
+  if(A&&A->ptr.hp) 
+  {
+    if(A->ptr.hp->tag) GList_DelElem(A->ptr.hp,x);
+    else if(!A->ptr.hp->tag&&A->ptr.hp->atom==x)
+    {
+      q=A;
+      A=A->ptr.tp;    //删去元素值为x的表头
+      free(q);
+      GList_DelElem(A,x);
+    }
+  }
+  if(A&&A->ptr.tp) GList_DelElem(A->ptr.tp,x);
+}//GList_DelElem 
+5.39 
+void GList_PrintElem_LOrder(GList A)//按层序输出广义表A中的所有元素
+{
+  InitQueue(Q);
+  for(p=L;p;p=p->ptr.tp) EnQueue(Q,p);
+  while(!QueueEmpty(Q))
+  {
+    DeQueue(Q,r);
+    if(!r->tag) printf("%d",r->atom);
+    else
+      for(r=r->ptr.hp;r;r=r->ptr.tp) EnQueue(Q,r); 
+  }//while
+}//GList_PrintElem_LOrder 
+分析:层序遍历的问题,一般都是借助队列来完成的,每次从队头取出一个元素的同时把它下一层的孩子插入队尾.这是层序遍历的基本思想. 
+

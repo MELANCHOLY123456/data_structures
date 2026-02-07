@@ -1,0 +1,483 @@
+第四章 串
+
+4.10 
+void String_Reverse(Stringtype s,Stringtype &r)//求s的逆串r
+{
+  StrAssign(r,''); //初始化r为空串
+  for(i=Strlen(s);i;i--)
+  {
+    StrAssign(c,SubString(s,i,1));
+    StrAssign(r,Concat(r,c)); //把s的字符从后往前添加到r中
+  }
+}//String_Reverse 
+4.11 
+void String_Subtract(Stringtype s,Stringtype t,Stringtype &r)//求所有包含在串s中而t中没有的字符构成的新串r
+{
+  StrAssign(r,'');
+  for(i=1;i<=Strlen(s);i++)
+  {
+    StrAssign(c,SubString(s,i,1));
+    for(j=1;j<i&&StrCompare(c,SubString(s,j,1));j++); //判断s的当前字符c是否第一次出现
+    if(i==j)
+    {
+      for(k=1;k<=Strlen(t)&&StrCompare(c,SubString(t,k,1));k++); //判断当前字符是否包含在t中
+      if(k>Strlen(t)) StrAssign(r,Concat(r,c));
+    }
+  }//for
+}//String_Subtract 
+4.12 
+int Replace(Stringtype &S,Stringtype T,Stringtype V);//将串S中所有子串T替换为V,并返回置换次数
+{
+  for(n=0,i=1;i<=Strlen(S)-Strlen(T)+1;i++) //注意i的取值范围
+    if(!StrCompare(SubString(S,i,Strlen(T)),T)) //找到了与T匹配的子串
+    { //分别把T的前面和后面部分保存为head和tail
+      StrAssign(head,SubString(S,1,i-1));
+      StrAssign(tail,SubString(S,i+Strlen(T),Strlen(S)-i-Strlen(T)+1));
+      StrAssign(S,Concat(head,V));
+      StrAssign(S,Concat(S,tail)); //把head,V,tail连接为新串
+      i+=Strlen(V); //当前指针跳到插入串以后
+      n++;
+    }//if
+  return n;
+}//Replace
+分析:i+=Strlen(V);这一句是必需的,也是容易忽略的.如省掉这一句,则在某些情况下,会引起不希望的后果,虽然在大多数情况下没有影响.请思考:设S='place', T='ace', V='face',则省掉i+=Strlen(V);运行时会出现什么结果? 
+4.13 
+int Delete_SubString(Stringtype &s,Stringtype t)//从串s中删除所有与t相同的子串,并返回删除次数
+{
+  for(n=0,i=1;i<=Strlen(s)-Strlen(t)+1;i++)
+    if(!StrCompare(SubString(s,i,Strlen(t)),t))
+    {
+      StrAssign(head,SubString(S,1,i-1));
+      StrAssign(tail,SubString(S,i+Strlen(t),Strlen(s)-i-Strlen(t)+1));
+      StrAssign(S,Concat(head,tail)); //把head,tail连接为新串
+      n++;
+    }//if
+  return n,
+}//Delete_SubString 
+4.14 
+Status NiBoLan_to_BoLan(Stringtype str,Stringtype &new)//把前缀表达式str转换为后缀式new
+{
+  Initstack(s); //s的元素为Stringtype类型
+  for(i=1;i<=Strlen(str);i++)
+  {
+    r=SubString(str,i,1);
+    if(r为字母) push(s,r);
+    else
+    {
+      if(StackEmpty(s)) return ERROR;
+      pop(s,a);
+      if(StackEmpty(s)) return ERROR;
+      pop(s,b);
+      StrAssign(t,Concat(r,b));
+      StrAssign(c,Concat(t,a)); //把算符r,子前缀表达式a,b连接为新子前缀表达式c
+      push(s,c);
+    }
+  }//for
+  pop(s,new);
+  if(!StackEmpty(s)) return ERROR;
+  return OK;
+}//NiBoLan_to_BoLan
+分析:基本思想见书后注释3.23.请读者用此程序取代作者早些时候对3.23题给出的程序. 
+4.15 
+void StrAssign(Stringtype &T,char chars&#//用字符数组chars给串T赋值,Stringtype的定义见课本
+{
+  for(i=0,T[0]=0;chars[i];T[0]++,i++) T[i+1]=chars[i];
+}//StrAssign 
+4.16 
+char StrCompare(Stringtype s,Stringtype t)//串的比较,s>t时返回正数,s=t时返回0,s<t时返回负数
+{
+  for(i=1;i<=s[0]&&i<=t[0]&&s[i]==t[i];i++);
+  if(i>s[0]&&i>t[0]) return 0;
+  else if(i>s[0]) return -t[i];
+  else if(i>t[0]) return s[i];
+  else return s[i]-t[i];
+}//StrCompare 
+4.17 
+int String_Replace(Stringtype &S,Stringtype T,Stringtype V);//将串S中所有子串T替换为V,并返回置换次数
+{
+  for(n=0,i=1;i<=S[0]-T[0]+1;i++)
+  {
+    for(j=i,k=1;T[k]&&S[j]==T[k];j++,k++);
+    if(k>T[0]) //找到了与T匹配的子串:分三种情况处理
+    {
+      if(T[0]==V[0])
+        for(l=1;l<=T[0];l++) //新子串长度与原子串相同时:直接替换
+          S[i+l-1]=V[l];
+      else if(T[0]<V[0]) //新子串长度大于原子串时:先将后部右移
+      {
+        for(l=S[0];l>=i+T[0];l--)
+          S[l+V[0]-T[0]]=S[l];
+        for(l=1;l<=V[0];l++)
+          S[i+l-1]=V[l];
+      }
+      else //新子串长度小于原子串时:先将后部左移
+      {
+        for(l=i+V[0];l<=S[0]+V[0]-T[0];l++)
+          S[l]=S[l-V[0]+T[0]];
+        for(l=1;l<=V[0];l++)
+          S[i+l-1]=V[l];
+      }
+      S[0]=S[0]-T[0]+V[0];
+      i+=V[0];n++;
+    }//if
+  }//for
+  return n;
+}//String_Replace 
+4.18 
+typedef struct {
+                     char ch;
+                     int num;
+                   } mytype;
+void StrAnalyze(Stringtype S)//统计串S中字符的种类和个数
+{
+  mytype T[MAXSIZE]; //用结构数组T存储统计结果
+  for(i=1;i<=S[0];i++)
+  {
+    c=S[i];j=0;
+    while(T[j].ch&&T[j].ch!=c) j++; //查找当前字符c是否已记录过
+    if(T[j].ch) T[j].num++;
+    else T[j]={c,1};
+  }//for
+  for(j=0;T[j].ch;j++)
+    printf("%c:  %d\n",T[j].ch,T[j].num);
+}//StrAnalyze 
+4.19 
+void Subtract_String(Stringtype s,Stringtype t,Stringtype &r)//求所有包含在串s中而t中没有的字符构成的新串r
+{
+  r[0]=0;
+  for(i=1;i<=s[0];i++)
+  {
+    c=s[i];
+    for(j=1;j<i&&s[j]!=c;j++); //判断s的当前字符c是否第一次出现
+    if(i==j)
+    {
+      for(k=1;k<=t[0]&&t[k]!=c;k++); //判断当前字符是否包含在t中
+      if(k>t[0]) r[++r[0]]=c;
+    }
+  }//for
+}//Subtract_String 
+4.20
+int SubString_Delete(Stringtype &s,Stringtype t)//从串s中删除所有与t相同的子串,并返回删除次数
+{
+  for(n=0,i=1;i<=s[0]-t[0]+1;i++)
+  {
+    for(j=1;j<=t[0]&&s[i+j-1]==t[i];j++);
+    if(j>m) //找到了与t匹配的子串
+    {
+      for(k=i;k<=s[0]-t[0];k++) s[k]=s[k+t[0]]; //左移删除
+      s[0]-=t[0];n++;
+    }
+  }//for
+  return n;
+}//Delete_SubString 
+4.21 
+typedef struct{
+                char ch;
+                LStrNode *next;
+              } LStrNode,*LString; //链串结构 
+void StringAssign(LString &s,LString t)//把串t赋值给串s
+{
+  s=malloc(sizeof(LStrNode));
+  for(q=s,p=t->next;p;p=p->next)
+  {
+    r=(LStrNode*)malloc(sizeof(LStrNode));
+    r->ch=p->ch;
+    q->next=r;q=r;
+  }
+  q->next=NULL;
+}//StringAssign 
+void StringCopy(LString &s,LString t)//把串t复制为串s.与前一个程序的区别在于,串s业已存在.
+{
+  for(p=s->next,q=t->next;p&&q;p=p->next,q=q->next)
+  {
+    p->ch=q->ch;pre=p;
+  }
+  while(q)
+  {
+    p=(LStrNode*)malloc(sizeof(LStrNode));
+    p->ch=q->ch;
+    pre->next=p;pre=p;
+  }
+  p->next=NULL;
+}//StringCopy 
+char StringCompare(LString s,LString t)//串的比较,s>t时返回正数,s=t时返回0,s<t时返回负数
+{
+  for(p=s->next,q=t->next;p&&q&&p->ch==q->ch;p=p->next,q=q->next);
+  if(!p&&!q) return 0;
+  else if(!p) return -(q->ch);
+  else if(!q) return p->ch;
+  else return p->ch-q->ch;
+}//StringCompare 
+int StringLen(LString s)//求串s的长度(元素个数)
+{
+  for(i=0,p=s->next;p;p=p->next,i++);
+  return i;
+}//StringLen 
+LString * Concat(LString s,LString t)//连接串s和串t形成新串,并返回指针
+{
+  p=malloc(sizeof(LStrNode));
+  for(q=p,r=s->next;r;r=r->next)
+  {
+    q->next=(LStrNode*)malloc(sizeof(LStrNode));
+    q=q->next;
+    q->ch=r->ch;
+  }//for //复制串s
+  for(r=t->next;r;r=r->next)
+  {
+    q->next=(LStrNode*)malloc(sizeof(LStrNode));
+    q=q->next;
+    q->ch=r->ch;
+  }//for //复制串t
+  q->next=NULL;
+  return p;
+}//Concat 
+LString * Sub_String(LString s,int start,int len)//返回一个串,其值等于串s从start位置起长为len的子串
+{
+  p=malloc(sizeof(LStrNode));q=p;
+  for(r=s;start;start--,r=r->next); //找到start所对应的结点指针r
+  for(i=1;i<=len;i++,r=r->next)
+  {
+    q->next=(LStrNode*)malloc(sizeof(LStrNode));
+    q=q->next;
+    q->ch=r->ch;
+  } //复制串t
+  q->next=NULL;
+  return p;
+}//Sub_String 
+4.22 
+void LString_Concat(LString &t,LString &s,char c)//用块链存储结构,把串s插入到串t的字符c之后
+{
+  p=t.head;
+  while(p&&!(i=Find_Char(p,c))) p=p->next; //查找字符c
+  if(!p) //没找到
+  {
+    t.tail->next=s.head;
+    t.tail=s.tail; //把s连接在t的后面
+  }
+  else
+  {
+    q=p->next;
+    r=(Chunk*)malloc(sizeof(Chunk)); //将包含字符c的节点p分裂为两个
+    for(j=0;j<i;j++) r->ch[j]='#'; //原结点p包含c及其以前的部分
+    for(j=i;j<CHUNKSIZE;j++) //新结点r包含c以后的部分
+    {
+      r->ch[j]=p->ch[j];
+      p->ch[j]='#'; //p的后半部分和r的前半部分的字符改为无效字符'#'
+    }
+    p->next=s.head;
+    s.tail->next=r;
+    r->next=q; //把串s插入到结点p和r之间
+  }//else
+  t.curlen+=s.curlen; //修改串长
+  s.curlen=0;
+}//LString_Concat 
+int Find_Char(Chunk *p,char c)//在某个块中查找字符c,如找到则返回位置是第几个字符,如没找到则返回0
+{
+  for(i=0;i<CHUNKSIZE&&p->ch[i]!=c;i++);
+  if(i==CHUNKSIZE) return 0;
+  else return i+1;
+}//Find_Char
+
+4.23 
+int LString_Palindrome(LString L)//判断以块链结构存储的串L是否为回文序列,是则返回1,否则返回0
+{
+  InitStack(S);
+  p=S.head;i=0;k=1; //i指示元素在块中的下标,k指示元素在整个序列中的序号(从1开始)
+  for(k=1;k<=S.curlen;k++)
+  {
+    if(k<=S.curlen/2) Push(S,p->ch[i]); //将前半段的字符入串
+    else if(k>(S.curlen+1)/2)
+    {
+      Pop(S,c); //将后半段的字符与栈中的元素相匹配
+      if(p->ch[i]!=c) return 0; //失配
+    }
+    if(++i==CHUNKSIZE) //转到下一个元素,当为块中最后一个元素时,转到下一块
+    {
+      p=p->next;
+      i=0;
+    }
+  }//for
+  return 1; //成功匹配
+}//LString_Palindrome
+4.24 
+void HString_Concat(HString s1,HString s2,HString &t)//将堆结构表示的串s1和s2连接为新串t
+{
+  if(t.ch) free(t.ch);
+  t.ch=malloc((s1.length+s2.length)*sizeof(char));
+  for(i=1;i<=s1.length;i++) t.ch[i-1]=s1.ch[i-1];
+  for(j=1;j<=s2.length;j++,i++) t.ch[i-1]=s2.ch[j-1];
+  t.length=s1.length+s2.length;
+}//HString_Concat 
+4.25 
+int HString_Replace(HString &S,HString T,HString V)//堆结构串上的置换操作,返回置换次数
+{
+  for(n=0,i=0;i<=S.length-T.length;i++)
+  {
+    for(j=i,k=0;k<T.length&&S.ch[j]==T.ch[k];j++,k++);
+    if(k==T.length) //找到了与T匹配的子串:分三种情况处理
+    {
+      if(T.length==V.length)
+        for(l=1;l<=T.length;l++) //新子串长度与原子串相同时:直接替换
+          S.ch[i+l-1]=V.ch[l-1];
+      else if(T.length<V.length) //新子串长度大于原子串时:先将后部右移
+      {
+        for(l=S.length-1;l>=i+T.length;l--)
+          S.ch[l+V.length-T.length]=S.ch[l];
+        for(l=0;l<V.length;l++)
+          S[i+l]=V[l];
+      }
+      else //新子串长度小于原子串时:先将后部左移
+      {
+        for(l=i+V.length;l<S.length+V.length-T.length;l++)
+          S.ch[l]=S.ch[l-V.length+T.length];
+        for(l=0;l<V.length;l++)
+          S[i+l]=V[l];
+      }
+      S.length+=V.length-T.length;
+      i+=V.length;n++;
+    }//if
+  }//for
+  return n;
+}//HString_Replace 
+4.26 
+Status HString_Insert(HString &S,int pos,HString T)//把T插入堆结构表示的串S的第pos个字符之前
+{
+  if(pos<1) return ERROR;
+  if(pos>S.length) pos=S.length+1;//当插入位置大于串长时,看作添加在串尾
+  S.ch=realloc(S.ch,(S.length+T.length)*sizeof(char));
+  for(i=S.length-1;i>=pos-1;i--)
+    S.ch[i+T.length]=S.ch[i]; //后移为插入字符串让出位置
+  for(i=0;i<T.length;i++)
+    S.ch[pos+i-1]=T.ch[pos]; //插入串T
+  S.length+=T.length;
+  return OK;
+}//HString_Insert 
+4.27 
+int Index_New(Stringtype s,Stringtype t)//改进的定位算法
+{
+  i=1;j=1;
+  while(i<=s[0]&&j<=t[0])
+  {
+    if((j!=1&&s[i]==t[j])||(j==1&&s[i]==t[j]&&s[i+t[0]-1]==t[t[0]]))
+    { //当j==1即匹配模式串的第一个字符时,需同时匹配其最后一个
+      i=i+j-2;
+      j=1;
+    }
+    else
+    {
+      i++;j++;
+    }
+  }//while
+  if(j>t[0]) return i-t[0];
+}//Index_New 
+4.28 
+void LGet_next(LString &T)//链串上的get_next算法
+{
+  p=T->succ;p->next=T;q=T;
+  while(p->succ)
+  {
+    if(q==T||p->data==q->data)
+    {
+      p=p->succ;q=q->succ;
+      p->next=q;
+    }
+    else q=q->next;
+  }//while
+}//LGet_next 
+4.29 
+LStrNode * LIndex_KMP(LString S,LString T,LStrNode *pos)//链串上的KMP匹配算法,返回值为匹配的子串首指针
+{
+  p=pos;q=T->succ;
+  while(p&&q)
+  {
+    if(q==T||p->chdata==q->chdata)
+    {
+      p=p->succ;
+      q=q->succ;
+    }
+    else q=q->next;
+  }//while
+  if(!q)
+  {
+    for(i=1;i<=Strlen(T);i++)
+      p=p->next;
+    return p;
+  } //发现匹配后,要往回找子串的头
+  return NULL;
+}//LIndex_KMP 
+4.30 
+void Get_LRepSub(Stringtype S)//求S的最长重复子串的位置和长度
+{
+  for(maxlen=0,i=1;i<S[0];i++)//串S2向右移i格
+  {
+    for(k=0,j=1;j<=S[0]-i;j++)//j为串S2的当前指针,此时串S1的当前指针为i+j,两指针同步移动
+    {
+      if(S[j]==S[j+i]) k++; //用k记录连续相同的字符数
+      else k=0; //失配时k归零
+      if(k>maxlen) //发现了比以前发现的更长的重复子串
+      {
+        lrs1=j-k+1;lrs2=mrs1+i;maxlen=k; //作记录
+      }
+    }//for
+  }//for
+  if(maxlen)
+  {
+    printf("Longest Repeating Substring length:%d\n",maxlen);
+    printf("osition1:%d  Position 2:%d\n",lrs1,lrs2);
+  }
+  else printf("No Repeating Substring found!\n";
+}//Get_LRepSub
+分析:i代表"错位值".本算法的思想是,依次把串S的一个副本S2向右错位平移1格,2格,3格,...与自身S1相匹配,如果存在最长重复子串,则必然能在此过程中被发现.用变量lrs1,lrs2,maxlen来记录已发现的最长重复子串第一次出现位置,第二次出现位置和长度.题目中未说明"重复子串"是否允许有重叠部分,本算法假定允许.如不允许,只需在第二个for语句的循环条件中加上k<=i即可.本算法时间复杂度为O(Strlen(S)^2). 
+4.31 
+void Get_LPubSub(Stringtype S,Stringtype T)//求串S和串T的最长公共子串位置和长度
+{
+  if(S[0]>=T[0])
+  {
+    StrAssign(A,S);StrAssign(B,T);
+  }
+  else
+  {
+    StrAssign(A,T);StrAssign(B,S);
+  } //为简化设计,令S和T中较长的那个为A,较短的那个为B
+  for(maxlen=0,i=1-B[0];i<A[0];i++)
+  {
+    if(i<0) //i为B相对于A的错位值,向左为负,左端对齐为0,向右为正
+    {
+      jmin=1;jmax=i+B[0];
+    }//B有一部分在A左端的左边
+    else if(i>A[0]-B[0])
+    {
+      jmin=i;jmax=A[0];
+    }//B有一部分在A右端的右边
+    else
+    {
+      jmin=i;jmax=i+B[0];
+    }//B在A左右两端之间.
+     //以上是根据A和B不同的相对位置确定A上需要匹配的区间(与B重合的区间)的端点:jmin,jmax.
+    for(k=0,j=jmin;j<=jmax;j++)
+    {
+      if(A[j]==B[j-i]) k++;
+      else k=0;
+      if(k>maxlen)
+      {
+        lps1=j-k+1;lps2=j-i-k+1;maxlen=k;
+      }
+    }//for
+  }//for
+  if(maxlen)
+  {
+    if(S[0]>=T[0])
+    {
+      lpsS=lps1;lpsT=lps2;
+    }
+    else
+    {
+      lpsS=lps2;lpsT=lps1;
+    } //将A,B上的位置映射回S,T上的位置
+    printf("Longest Public Substring length:%d\n",maxlen);
+    printf("osition in S:%d  Position in T:%d\n",lpsS,lpsT);
+  }//if
+  else printf("No Repeating Substring found!\n";
+}//Get_LPubSub
+分析:本题基本思路与上题同.唯一的区别是,由于A,B互不相同,因此B不仅要向右错位,而且还要向左错位,以保证不漏掉一些情况.当B相对于A的位置不同时,需要匹配的区间的计算公式也各不相同,请读者自己画图以帮助理解.本算法的时间复杂度是o（strlrn（s）*strlen（t））。 
+

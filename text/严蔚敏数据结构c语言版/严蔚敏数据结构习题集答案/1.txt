@@ -1,0 +1,109 @@
+第一章 绪论
+
+1.16 
+void print_descending(int x,int y,int z)//按从大到小顺序输出三个数
+{
+  scanf("%d,%d,%d",&x,&y,&z);
+  if(x<y) x<->y; //<->为表示交换的双目运算符,以下同
+  if(y<z) y<->z;
+  if(x<y) x<->y; //冒泡排序
+  printf("%d %d %d",x,y,z);
+}//print_descending 
+1.17 
+Status fib(int k,int m,int &f)//求k阶斐波那契序列的第m项的值f
+{
+   int tempd;
+  if(k<2||m<0) return ERROR; 
+  if(m<k-1) f=0;
+  else if (m==k-1 || m==k) f=1;
+  else
+  {
+    for(i=0;i<=k-2;i++) temp=0;
+    temp[k-1]=1;temp[k]=1; //初始化
+    sum=1;
+    j=0;
+    for(i=k+1;i<=m;i++,j++) //求出序列第k至第m个元素的值
+      temp=2*sum-temp[j];
+    f=temp[m];
+  }
+  return OK;
+}//fib
+分析: k阶斐波那契序列的第m项的值f[m]=f[m-1]+f[m-2]+......+f[m-k]
+        =f[m-1]+f[m-2]+......+f[m-k]+f[m-k-1]-f[m-k-1]
+        =2*f[m-1]-f[m-k-1]
+所以上述算法的时间复杂度仅为O(m). 如果采用递归设计,将达到O(k^m). 即使采用暂存中间结果的方法,也将达到O(m^2).    
+1.18 
+typedef struct{
+                    char *sport;
+                    enum{male,female} gender;
+                    char schoolname; //校名为'A','B','C','D'或'E'
+                    char *result;
+                    int score;
+                  } resulttype; 
+typedef struct{
+                    int malescore;
+                    int femalescore;
+                    int totalscore;
+                  } scoretype; 
+void summary(resulttype result[ ])//求各校的男女总分和团体总分,假设结果已经储存在result[ ]数组中
+{
+  scoretype score[MAXSIZE];
+  i=0;
+  while(result.sport!=NULL)
+  {
+    switch(result.schoolname)
+    {
+      case 'A':
+        score[ 0 ].totalscore+=result.score;
+        if(result.gender==0) score[ 0 ].malescore+=result.score;
+        else score[ 0 ].femalescore+=result.score;
+        break;
+      case 'B':
+        score[ 0 ].totalscore+=result.score;
+        if(result.gender==0) score[ 0 ].malescore+=result.score;
+        else score[ 0 ].femalescore+=result.score;
+        break;
+      ……    ……    ……
+    }
+    i++；
+  }
+  for(i=0;i<5;i++)
+  {
+    printf("School %d:\n",i);
+    printf("Total score of male:%d\n",score.malescore);
+    printf("Total score of female:%d\n",score.femalescore);
+    printf("Total score of all:%d\n\n",score.totalscore);
+  }
+}//summary 
+1.19 
+Status algo119(int a[ARRSIZE])//求i!*2^i序列的值且不超过maxint
+{
+  last=1;
+  for(i=1;i<=ARRSIZE;i++)
+  {
+  a[i-1]=last*2*i;
+   if((a[i-1]/last)!=(2*i)) reurn OVERFLOW;
+   last=a[i-1];
+   return OK;
+  }
+}//algo119
+分析:当某一项的结果超过了maxint时,它除以前面一项的商会发生异常. 
+1.20 
+void polyvalue()
+{
+  float temp;
+  float *p=a;
+  printf("Input number of terms:");
+  scanf("%d",&n);
+  printf("Input value of x:");
+  scanf("%f",&x);
+  printf("Input the %d coefficients from a0 to a%d:\n",n+1,n);
+  p=a;xp=1;sum=0; //xp用于存放x的i次方
+  for(i=0;i<=n;i++)
+  {
+    scanf("%f",&temp); 
+    sum+=xp*(temp);
+    xp*=x;
+  }
+  printf("Value is:%f",sum);
+}//polyvalue 
