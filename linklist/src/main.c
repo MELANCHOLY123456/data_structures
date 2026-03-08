@@ -9,5 +9,7 @@ int main() {
         printf("初始化链表失败\n");
         return 1;
     }
-    printf("初始化L后：ListLength(L)=%d\n", CListLength(L));
+    printf("初始化L后：ListLength(L)=%d\n", SListLength(L));
+    DestroySList(&L);
+    return 0;
 }
