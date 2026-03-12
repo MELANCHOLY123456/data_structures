@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include "stack.c"
+#include "stack.h"
 
 int main(int argc, char const* argv[]) {
     LinkStack s;
@@ -18,6 +18,6 @@ int main(int argc, char const* argv[]) {
     GetTop(s, &e);
     printf("e = %d\n", e);
     ClearStack(&s);
-    printf("%d", StackEmpty(s));
+    printf("%d\n", StackEmpty(s));
     return 0;
 }
