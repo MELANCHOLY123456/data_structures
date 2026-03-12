@@ -25,6 +25,20 @@ int SListEmpty(LinkList L) {
     return (L->next == NULL) ? TRUE : FALSE; // 如果头节点的next指针为NULL，说明链表为空
 }
 
+int GetSListElem(LinkList L, int pos, int* data) {
+    if (L == NULL || pos < 1 || pos > SListLength(L) || data == NULL) {
+        return ERROR; // 获取位置不合法
+    }
+    LinkList p = L->next; // 从第一个节点开始
+    int i = 1;
+    while (i < pos) {
+        p = p->next;
+        i++;
+    }
+    *data = p->data; // 获取目标节点的数据
+    return OK;
+}
+
 int InsertSList(LinkList L, int pos, int data) {
     if (L == NULL || pos < 1 || pos > SListLength(L) + 1) {
         return ERROR; // 插入位置不合法

@@ -19,6 +19,7 @@ typedef struct Node* LinkList;
 int InitSList(LinkList* L); // 初始化单向链表
 int SListLength(LinkList L); // 获取单向链表长度
 int SListEmpty(LinkList L); // 判断单向链表是否为空
+int GetSListElem(LinkList L, int pos, int* data); // 按位置获取节点数据
 int InsertSList(LinkList L, int pos, int data); // 按位置插入
 int DeleteSList(LinkList L, int pos, int* data); // 按位置删除节点，返回删除值
 void TraverseSList(LinkList L); // 遍历单向链表
