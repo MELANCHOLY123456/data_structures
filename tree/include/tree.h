@@ -9,11 +9,15 @@
 typedef int Status;
 typedef int ElemType;
 
-typedef struct BiTNode {
+struct BiTNode {
     ElemType data;
     struct BiTNode* lchild;
     struct BiTNode* rchild;
-} BiTNode, * BiTree;
+};
+
+typedef struct BiTNode BiTNode;
+typedef struct BiTNode* BiTree;
+
 
 // ===================== 二叉树常用操作函数声明 =====================
 // 1. 创建二叉树（按先序遍历输入，空结点用特殊值标识，如-1）
