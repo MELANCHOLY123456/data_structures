@@ -29,5 +29,3 @@ int main(int argc, char const* argv[]) {
     printArray(arr, length);
     return 0;
 }
-
-
